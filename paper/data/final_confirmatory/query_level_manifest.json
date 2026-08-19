@@ -1,0 +1,32 @@
+{
+  "aggregate_rows": 20,
+  "condition_rows": 100,
+  "definition": {
+    "full_set_coverage": "Mean over unique queries of whether every recorded answer for that query is included in the prediction set.",
+    "full_vocabulary_set_rate": "Fraction of unique queries whose prediction-set size is at least the closed entity vocabulary size.",
+    "label_weighted_partial_recall": "Covered observed labels divided by observed labels; this should match label-marginal coverage up to duplicate handling.",
+    "partial_answer_recall": "Mean over unique queries of the fraction of recorded answers included in the prediction set."
+  },
+  "generated_at": "2026-08-16T14:51:01+08:00",
+  "label_rows": 3859600,
+  "num_entities": 7128,
+  "outputs": {
+    "query_level_by_seed.csv": "c649a6ac0fd5e4967347bb13e3706b942c2553aed7fc7bbd159561cff2747f11",
+    "query_level_manifest.json": "bc26fe07d61ac03b7c21d8ddcc23481e6362812340a81d5cc398b47e5be2cfdf",
+    "query_level_paper_table.csv": "7723d477d98e2b9039ea6141afd40ac2981c83a590aa1867ba4d81f2177a3432",
+    "query_level_summary.csv": "10d8bbf43f48646586f90eee167b4c4fa1ae7c74764ec408a98ff47a0deaf3e0"
+  },
+  "query_key": [
+    "seed",
+    "deletion_rate",
+    "method",
+    "prediction_side",
+    "timestamp",
+    "subject_id",
+    "relation_id"
+  ],
+  "run_root": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "source_per_query": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658/metrics/per_query.parquet",
+  "source_per_query_sha256": "2ccccf52e8654f8c17060397e870c5b1a34649b503f4bc841d0a08a342f4fc92",
+  "unique_query_rows": 3396400
+}

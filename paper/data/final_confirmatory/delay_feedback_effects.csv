@@ -1,0 +1,9 @@
+statistic,deletion_rate,target,extra_delay_blocks,observed,ci95_low,ci95_high,pvalue_positive,iterations,block_length,seed_count,timestamp_count,weighting
+rolling_micro_coverage_gain_vs_static,0.3,0.9,0,0.07629806198,0.05932814628,0.09632831588,4.999750012e-05,20000,7,5,73,query_count
+rolling_undercoverage_reduction_vs_static,0.3,0.9,0,0.07226322889,0.05344450927,0.09357290756,4.999750012e-05,20000,7,5,73,timestamp_macro
+rolling_micro_coverage_gain_vs_static,0.3,0.9,1,0.07413721629,0.05702460703,0.09441849438,4.999750012e-05,20000,7,5,73,query_count
+rolling_undercoverage_reduction_vs_static,0.3,0.9,1,0.07106747886,0.05228874706,0.09238680198,4.999750012e-05,20000,7,5,73,timestamp_macro
+rolling_micro_coverage_gain_vs_static,0.3,0.9,3,0.06998134522,0.05294249684,0.08956693799,4.999750012e-05,20000,7,5,73,query_count
+rolling_undercoverage_reduction_vs_static,0.3,0.9,3,0.06781921985,0.04917911385,0.08819822168,4.999750012e-05,20000,7,5,73,timestamp_macro
+rolling_micro_coverage_gain_vs_static,0.3,0.9,7,0.06493937196,0.04687644945,0.08334781988,4.999750012e-05,20000,7,5,73,query_count
+rolling_undercoverage_reduction_vs_static,0.3,0.9,7,0.06367486361,0.04506724107,0.08272999491,4.999750012e-05,20000,7,5,73,timestamp_macro

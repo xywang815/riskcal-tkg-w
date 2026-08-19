@@ -1,0 +1,87 @@
+{
+  "condition_count": 6,
+  "config_sha256": "23896a37f51490fa0662f063fa5e053f14638c922c314eb16b04a8e268fce8f3",
+  "dataset_sha256": "706197711ae538fc4523677fd6f398b6305777990139f6cfa0892efad2d97726",
+  "duration_seconds": 414.22798280000006,
+  "environment": {
+    "cpu_count": 16,
+    "cuda_available": false,
+    "cuda_version": null,
+    "git_commit": "9596c0342e01130cd41622a6733568cc83b6f3ea",
+    "gpu": null,
+    "gpu_memory_bytes": null,
+    "os": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944 64 bit (AMD64)]",
+    "ram_bytes": 16981778432,
+    "torch": "2.11.0+cpu"
+  },
+  "environment_json_sha256": "561acf6c1dcfd592816835ee81b23c2d7ae78f478af4c165b30db76c859c30a7",
+  "evidence_class": "local CPU diagnostic; non-confirmatory",
+  "export": {
+    "invocation": "python scripts/export_paper_diagnostic.py --run-root \"D:\\OneDrive\\Documents\\toffoli\\tmp\\riskcal-icews14-cpu-diagnostic\\20260812T112806934393Z-23896a37f514\" --paper-root paper",
+    "repository_base_commit": "9596c0342e01130cd41622a6733568cc83b6f3ea",
+    "script_path": "scripts/export_paper_diagnostic.py",
+    "script_sha256": "7c69bdf32daca7ff5653424a348a45d0de57238c7e13623eece11c263f80d145",
+    "timestamp_coordinate": "Figures use original dataset timestamp labels; source metrics retain zero-based internal timestamp IDs."
+  },
+  "generated_at": "2026-08-12T20:12:09+08:00",
+  "hardware_summary": {
+    "gpu": null,
+    "gpu_memory_bytes": null,
+    "logical_cpu_count": 16,
+    "ram_bytes": 16981778432
+  },
+  "notes": [
+    "Three seeds and two deletion rates; full ICEWS14 data.",
+    "16-dimensional continuous-time DistMult, 3 epochs, CPU only.",
+    "Not admissible for confirmatory tables, abstract, conclusion, or paper-level empirical claims."
+  ],
+  "outputs": {
+    "paper/data/icews14_dataset_manifest.json": "7f0bce0d4e000c1199eb2f575a96cfe1326622c36fe85b4d018031c8dd261a4a",
+    "paper/data/local_cpu_diagnostic_aggregate.csv": "fa5e2fa719cd44105e6307dc6712b8aaa979f3d1143478e0da5870264dcc1db6",
+    "paper/data/local_cpu_diagnostic_by_time.csv": "89fe29824e711c8478b390b800144ed24acc8e0839e18f05ec824d98aabda572",
+    "paper/data/local_cpu_diagnostic_conditions.csv": "caa5cedf6c4d60ec585cf738caa9027ddaa6a4c846de70b475ddc4307ecade22",
+    "paper/data/local_cpu_diagnostic_half_lives.csv": "ae5df851c7dd87d28dc22a2cb2d5e25f7d19879a21a301de2c2542d3cb9ff57c",
+    "paper/data/local_cpu_diagnostic_macro_time_by_seed.csv": "b75178b9e36e8118d4734f3a5f948b0c96a7fa7de59ff8ffde830a30cfbe96d4",
+    "paper/data/local_cpu_diagnostic_summary.csv": "5d46efd557b69cdbf50c5bebd1f6ea833d17f1806adf4aee0d2b5adbba8a86df",
+    "paper/figures/local_cpu_coverage.pdf": "61d7a73b4f6389b900190840ef5110137866ab4bde909ef372cbc07b2856a4ce",
+    "paper/figures/local_cpu_coverage.png": "fcace9e7a5505861c4b7c9c072ace7a5a4eff905e4929ddb6c07c59e0405da0e",
+    "paper/figures/local_cpu_coverage_by_time.pdf": "61d7a73b4f6389b900190840ef5110137866ab4bde909ef372cbc07b2856a4ce",
+    "paper/figures/local_cpu_coverage_by_time.png": "fcace9e7a5505861c4b7c9c072ace7a5a4eff905e4929ddb6c07c59e0405da0e",
+    "paper/figures/local_cpu_coverage_size_tradeoff.pdf": "d44acac599df3f59ee34d67aa839f977b0eba16e2fbb14dcd8ac8a77ca2a8639",
+    "paper/figures/local_cpu_coverage_size_tradeoff.png": "f2e8b934e23a8960ba046a6f27f993850904e6611119b9946f3f4cff86d8a415"
+  },
+  "query_rows": 926304,
+  "resolved_config_file_sha256": "5d57251d03f2bfb8f39d2f1aa5cfbd24cef6fe2c6f47e3a8d5fe2c7207777d07",
+  "run_id": "20260812T112806934393Z-23896a37f514",
+  "run_manifest_sha256": "ef8e7c41b97138706987dec9459927a20b281b0b6cc0fac9dc553c04b67cb9d2",
+  "run_root": "D:\\OneDrive\\Documents\\toffoli\\tmp\\riskcal-icews14-cpu-diagnostic\\20260812T112806934393Z-23896a37f514",
+  "software_summary": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "os": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.11.0+cpu"
+  },
+  "source_files": {
+    "test.txt": {
+      "bytes": 98434,
+      "sha256": "1ce0a75fbdc1d1e041efe290f44948722327c65a9ea09a728060b2c34d3474bd"
+    },
+    "train.txt": {
+      "bytes": 970796,
+      "sha256": "228da10c44ae0a5babc439c76e063ee8094352da7270b299b0b0a6778cddd0f4"
+    },
+    "valid.txt": {
+      "bytes": 112855,
+      "sha256": "b046fe729601246f0b52fceff371e7cb668b63669aee812ddf392cad4fcd8196"
+    }
+  },
+  "source_metrics": {
+    "SUCCESS_GATE.json": "ec95b33e2cbb21486ca3aface77d807de91f4d87e3338e26b0eded663ffd22b0",
+    "per_query.parquet": "dc26f0e04010f229efd0712de3a3e5021517d0147bca3b7866afc7af04967a04",
+    "per_window.csv": "78c642163dbda92ab812b0f843b6c6be3eb6fad79a677abf970085e32b38b674",
+    "summary.json": "5f034390b4a56d91f0807da2c30f9353546f15f9a9db5e99240c8915c93f4444"
+  },
+  "window_rows": 1752
+}

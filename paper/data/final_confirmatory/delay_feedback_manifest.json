@@ -1,0 +1,30 @@
+{
+  "block_length": 7,
+  "bootstrap_seed": 20260818,
+  "created_at": "2026-08-18T08:11:20+08:00",
+  "definition": {
+    "extra_delay_blocks": "Additional completed test-timestamp batches withheld before a test batch can update the rolling calibration pool.  Delay 0 matches the ordinary batch-completion prequential update.",
+    "rolling": "Equal-weight conformal threshold over the most recent 1000 revealed nonconformity scores.",
+    "static": "Fixed empirical threshold from the final initial calibration interval; repeated across delay values only for paired summaries."
+  },
+  "delays": [
+    0,
+    1,
+    3,
+    7
+  ],
+  "device": "cuda",
+  "effect_deletion_rate": 0.3,
+  "iterations": 20000,
+  "output_name": "final_confirmatory",
+  "outputs": {
+    "delay_feedback_by_seed.csv": "f9e5cc382bfd8ac67be5a27903bbf03c8e64e4424701da3c98005dd7561ea5ac",
+    "delay_feedback_by_timestamp.csv": "c012ce11e520db6a1b1c46ff2f7fd1803fc1443f4d73eceba79852ec6357a7c3",
+    "delay_feedback_effects.csv": "2a8660837fe5c82887e5e67cbcd7d93fd338f06fbdb0feab2cf6926ba3546d71",
+    "delay_feedback_manifest.json": "602ca7e1de95c9dbd7498403366719d8bbfd672af6e1b441226ea07c906377ae",
+    "delay_feedback_summary.csv": "4f13f410e87a460196342c1fa7dfa212d27b26673fe55fe895e0d64f034b750e"
+  },
+  "run_root": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "script_sha256": "67fccf945ae3e3bbf47930415c72b1babfe14636300bbda69ff9a7d051ca02aa",
+  "target_coverage": 0.9
+}

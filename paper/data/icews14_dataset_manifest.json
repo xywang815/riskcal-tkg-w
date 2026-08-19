@@ -1,0 +1,46 @@
+{
+  "calibration_facts": 18439,
+  "calibration_max_timestamp_id": 291,
+  "calibration_max_timestamp_raw": "292",
+  "calibration_timestamp_range": [
+    "220",
+    "292"
+  ],
+  "duplicate_facts_removed": 0,
+  "input_facts": 90730,
+  "normalized_values_sha256": "1779bdcc1e4f3017a8a7945234692bfed569907baf9fd376ed904c6fafefbc91",
+  "num_entities": 7128,
+  "num_facts": 90730,
+  "num_relations": 230,
+  "num_timestamps": 365,
+  "sha256": "706197711ae538fc4523677fd6f398b6305777990139f6cfa0892efad2d97726",
+  "source_files": {
+    "test.txt": {
+      "bytes": 98434,
+      "sha256": "1ce0a75fbdc1d1e041efe290f44948722327c65a9ea09a728060b2c34d3474bd"
+    },
+    "train.txt": {
+      "bytes": 970796,
+      "sha256": "228da10c44ae0a5babc439c76e063ee8094352da7270b299b0b0a6778cddd0f4"
+    },
+    "valid.txt": {
+      "bytes": 112855,
+      "sha256": "b046fe729601246f0b52fceff371e7cb668b63669aee812ddf392cad4fcd8196"
+    }
+  },
+  "test_facts": 19298,
+  "test_max_timestamp_id": 364,
+  "test_max_timestamp_raw": "365",
+  "test_timestamp_range": [
+    "293",
+    "365"
+  ],
+  "timestamp_coordinate_note": "Fields ending in _timestamp_id use zero-based internal IDs; timestamp_range and fields ending in _timestamp_raw use original labels.",
+  "train_facts": 52993,
+  "train_max_timestamp_id": 218,
+  "train_max_timestamp_raw": "219",
+  "train_timestamp_range": [
+    "1",
+    "219"
+  ]
+}

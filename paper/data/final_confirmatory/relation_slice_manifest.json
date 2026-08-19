@@ -1,0 +1,36 @@
+{
+  "definition": {
+    "eligible_relation_side_groups": "Relation-side groups with at least min_total_labels observed labels after aggregating over seeds and at least min_seed_count seeds.",
+    "label_coverage": "Observed-label coverage within a relation-side slice.",
+    "relation_side": "The original relation ID plus prediction side. Subject queries are mapped from inverse-relation IDs back to the base relation.",
+    "relation_side_coverage_min": "Minimum mean observed-label coverage across eligible relation-side groups."
+  },
+  "generated_at": "2026-08-17T17:26:41+08:00",
+  "group_key": [
+    "seed",
+    "deletion_rate",
+    "method",
+    "prediction_side",
+    "base_relation_id",
+    "relation_label"
+  ],
+  "label_rows": 3859600,
+  "min_seed_count": 5,
+  "min_total_labels": 250,
+  "num_entities": 7128,
+  "num_relations": 230,
+  "outputs": {
+    "relation_slice_by_seed.csv": "d498efbb3b6eab2b3e2c3bfbda7529a520c26d24f91c48373e2d65a49a6d821b",
+    "relation_slice_summary.csv": "d9d7212ec2b5a2796eeba125b2071c79f6a2cc64db4a0efb5c6778519c931d43",
+    "relation_worst_group_paper_table.csv": "f6470123c168dd6e0cca1c258ed9bf08ebde7666ad94eee6a01322aaa0a89687",
+    "relation_worst_group_summary.csv": "d002db018f1094b084e05ab6f42acdcbdb8c82281eeb5c0e94ea05cc5d3c9c06"
+  },
+  "paper_table_rows": 8,
+  "relation_side_rows": 7360,
+  "run_root": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "seed_relation_side_rows": 36800,
+  "source_per_query": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658/metrics/per_query.parquet",
+  "source_per_query_sha256": "2ccccf52e8654f8c17060397e870c5b1a34649b503f4bc841d0a08a342f4fc92",
+  "target_coverage": 0.9,
+  "worst_group_rows": 20
+}

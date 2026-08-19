@@ -1,0 +1,65 @@
+{
+  "bootstrap": {
+    "block_length": 7,
+    "iterations": 20000,
+    "method": "rolling",
+    "seed": 20260818
+  },
+  "caps": [
+    "1",
+    "10",
+    "50",
+    "100",
+    "250",
+    "500",
+    "1000",
+    "2000",
+    "3000",
+    "4000",
+    "5000",
+    "inf"
+  ],
+  "definition": {
+    "candidate_load": "Mean number of returned candidate entities per original unique query, counting abstentions as zero returned candidates.",
+    "candidate_load_reduction_vs_uncapped": "Relative reduction in candidate_load compared with the same seed/deletion/method without a cap.",
+    "cap": "Maximum accepted prediction-set size. Queries above the cap are abstained, not counted as answered.",
+    "conditional_full_set_coverage": "Full-set coverage among answered unique queries only.",
+    "unconditional_full_set_recall": "Fraction of all unique queries that are both answered and full-set covered; abstained queries contribute zero."
+  },
+  "effect_rows": 24,
+  "generated_at": "2026-08-18T09:42:08+08:00",
+  "label_rows": 3859600,
+  "num_entities": 7128,
+  "outputs": {
+    "set_size_utility_by_seed.csv": "6450523148127a4af8d8eea800445815f204fe0efb0219dda5b4181c8c1a30e6",
+    "set_size_utility_by_timestamp.csv": "fa7f3fb9d29d1b227b5b994b313a28246d76fdb02226d1c1197432da92fb38a9",
+    "set_size_utility_effects.csv": "247c683477fe223fcfdc58f6e670b6b79ca90b510687bcce26d21c367191ba1c",
+    "set_size_utility_manifest.json": "5b612041b89f69e0e0ebc57cf1047d1d63648e23c15cf5b5a0013109feed2c26",
+    "set_size_utility_paper_table.csv": "026533f395ebb0d89a749dbb80b0d414474a1fc471a4d0cb6d6d2177ce848594",
+    "set_size_utility_summary.csv": "65c7eae0e1d723d4dc416852c29ef2baf27ea690cfd0d5c3d14ad8b950ff3e27"
+  },
+  "paper_caps": [
+    "500",
+    "1000",
+    "2000",
+    "3000",
+    "4000",
+    "5000",
+    "inf"
+  ],
+  "paper_deletion_rate": 0.3,
+  "paper_methods": [
+    "static",
+    "rolling",
+    "weighted",
+    "adaptive"
+  ],
+  "paper_table_rows": 28,
+  "run_root": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "seed_operating_point_rows": 1200,
+  "source_per_query": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658/metrics/per_query.parquet",
+  "source_per_query_sha256": "2ccccf52e8654f8c17060397e870c5b1a34649b503f4bc841d0a08a342f4fc92",
+  "summary_rows": 240,
+  "timestamp_operating_point_rows": 87600,
+  "unique_query_rows": 3396400
+}

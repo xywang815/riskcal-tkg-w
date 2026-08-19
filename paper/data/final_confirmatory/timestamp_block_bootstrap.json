@@ -1,0 +1,63 @@
+{
+  "block_length": 7,
+  "block_scheme": "seed-resampled circular moving-block bootstrap with one shared timestamp-block draw applied to all sampled seeds in each replicate",
+  "bootstrap_seed": 20260816,
+  "created_at": "2026-08-18T07:00:34+08:00",
+  "deletion_rate": 0.3,
+  "iterations": 20000,
+  "run_root": "results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "statistics": {
+    "rolling_micro_coverage_gain_vs_static": {
+      "ci95": [
+        0.05952044375624709,
+        0.09622123083101256
+      ],
+      "observed": 0.07629806197533423,
+      "observed_by_seed": {
+        "17": 0.07772826199606177,
+        "29": 0.06764949735723909,
+        "43": 0.07518913877085709,
+        "59": 0.08117421494455385,
+        "71": 0.07974919680795937
+      },
+      "pvalue_positive": 4.999750012499375e-05,
+      "seed_count": 5,
+      "timestamp_count": 73
+    },
+    "rolling_undercoverage_reduction_vs_static": {
+      "ci95": [
+        0.053459737974432764,
+        0.09380235291070721
+      ],
+      "observed": 0.07226322888762841,
+      "observed_by_seed": {
+        "17": 0.07352110632792325,
+        "29": 0.06236812814192095,
+        "43": 0.07049568385770358,
+        "59": 0.07708459602853443,
+        "71": 0.0778466300820599
+      },
+      "pvalue_positive": 4.999750012499375e-05,
+      "seed_count": 5,
+      "timestamp_count": 73
+    },
+    "scorer_mrr_gain_vs_frequency": {
+      "ci95": [
+        0.20699259839975945,
+        0.229665316535363
+      ],
+      "observed": 0.2179788223414422,
+      "observed_by_seed": {
+        "17": 0.2190704694894905,
+        "29": 0.21660930105573462,
+        "43": 0.22001224535555505,
+        "59": 0.21780758461673536,
+        "71": 0.2163945111896955
+      },
+      "pvalue_positive": 4.999750012499375e-05,
+      "seed_count": 5,
+      "timestamp_count": 73
+    }
+  },
+  "target": 0.9
+}

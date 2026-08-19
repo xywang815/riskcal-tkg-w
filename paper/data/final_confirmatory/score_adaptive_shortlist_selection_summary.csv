@@ -1,0 +1,2 @@
+candidate,k_reg,penalty,condition_count,selection_observed_label_coverage_mean,selection_full_set_coverage_mean,selection_mean_size_mean,selection_p90_size_mean,condition_fraction
+raps_k50_lam0p0001,50,0.0001,20,0.8979571664,0.8900703313,3234.976411,4673.943148,1

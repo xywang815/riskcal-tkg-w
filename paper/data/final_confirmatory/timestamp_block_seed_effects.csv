@@ -1,0 +1,16 @@
+statistic,deletion_rate,target,seed,observed,weighting
+rolling_undercoverage_reduction_vs_static,0.3,0.9,17,0.07352110633,timestamp_macro
+rolling_undercoverage_reduction_vs_static,0.3,0.9,29,0.06236812814,timestamp_macro
+rolling_undercoverage_reduction_vs_static,0.3,0.9,43,0.07049568386,timestamp_macro
+rolling_undercoverage_reduction_vs_static,0.3,0.9,59,0.07708459603,timestamp_macro
+rolling_undercoverage_reduction_vs_static,0.3,0.9,71,0.07784663008,timestamp_macro
+rolling_micro_coverage_gain_vs_static,0.3,0.9,17,0.077728262,query_count
+rolling_micro_coverage_gain_vs_static,0.3,0.9,29,0.06764949736,query_count
+rolling_micro_coverage_gain_vs_static,0.3,0.9,43,0.07518913877,query_count
+rolling_micro_coverage_gain_vs_static,0.3,0.9,59,0.08117421494,query_count
+rolling_micro_coverage_gain_vs_static,0.3,0.9,71,0.07974919681,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,17,0.2190704695,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,29,0.2166093011,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,43,0.2200122454,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,59,0.2178075846,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,71,0.2163945112,query_count

@@ -1,0 +1,149 @@
+\subsection{Finite-Pool Properties and a Deterministic Coverage Decomposition}
+\label{sec:theory-scope}
+
+This section states exactly what follows from the implemented margin sets and
+what does not.  The analysis is conditional on the frozen scorer and on all
+information available before timestamp \(t\).  It requires no exchangeability
+assumption, but consequently its drift and estimation terms are not guaranteed
+to be small.
+
+Let \(A_t=a(X_t,Y_t)\) be the margin nonconformity score of a randomly indexed
+observed query--label pair from the current timestamp batch.  Conditional on
+the revealed past and the unlabeled current batch, define its CDF as
+\[
+  F_t(u)=\Pr\{A_t\leq u\mid\mathcal{I}_{t^-}\}.
+\]
+The conditioning information \(\mathcal{I}_{t^-}\) includes the frozen scorer,
+past revealed labels, current query identities, and any drift features computed
+without current labels.  Let \(a_1,\ldots,a_n\) be the scores in the current
+calibration pool, with nonnegative normalized weights
+\(\bar w_i\) satisfying \(\sum_i\bar w_i=1\).  If \(F_i\) denotes the
+conditional score CDF associated with the source position of \(a_i\), define
+the population weighted-history mixture and its empirical counterpart by
+\[
+  H_{t,w}(u)=\sum_{i=1}^{n}\bar w_iF_i(u),
+  \qquad
+  \widehat H_{t,w}(u)=\sum_{i=1}^{n}\bar w_i
+  \mathbb{1}\{a_i\leq u\}.
+\]
+For \(p=1-\alpha\), the implemented inclusive weighted threshold is
+\[
+  q_t=\inf\{u:\widehat H_{t,w}(u)\geq p\}.
+\]
+Two quantities separate temporal mismatch from finite-pool estimation:
+\[
+\begin{aligned}
+  \delta_t&=\sup_u|F_t(u)-H_{t,w}(u)|,\\
+  \epsilon_t&=\sup_u|\widehat H_{t,w}(u)-H_{t,w}(u)|.
+\end{aligned}
+\]
+Because KG score margins can tie, the relevant discretization term is not the
+largest individual weight.  It is the largest empirical atom mass
+\[
+  \eta_t=\max_v\sum_{i:a_i=v}\bar w_i.
+\]
+
+\paragraph{Proposition 1 (set geometry and exact coverage event).}
+For every query \(x\) and nonnegative thresholds \(q_1\leq q_2\),
+\[
+  C_{q_1}(x)\subseteq C_{q_2}(x),
+  \qquad C_{q_1}(x)\neq\varnothing.
+\]
+Moreover, for an observed label \(Y_t\),
+\[
+  Y_t\in C_{q_t}(X_t)
+  \quad\Longleftrightarrow\quad A_t\leq q_t,
+\]
+and hence the conditional label-marginal coverage is exactly \(F_t(q_t)\).
+
+\emph{Proof.}
+The first claim follows because the sublevel set of \(a(x,y)\) can only grow as
+its threshold increases.  The top-scoring candidate has margin zero, so it is
+included whenever the threshold is nonnegative.  The final equivalence is the
+definition of \(C_q(x)\); taking conditional probability gives \(F_t(q_t)\).
+\hfill\(\square\)
+
+This proposition also fixes the interpretation of the primary metric.  It is
+coverage of a randomly indexed recorded answer, not simultaneous coverage of
+all answers in \(Y_t(x)\).  Full-set coverage and partial answer recall are
+therefore reported separately for multi-answer queries in the empirical
+diagnostics.
+
+\paragraph{Proposition 2 (deterministic coverage-deviation bound).}
+For any finite threshold selected by the inclusive empirical rule above,
+\[
+  1-\alpha-\delta_t-\epsilon_t
+  \;\leq\;F_t(q_t)\;\leq\;
+  1-\alpha+\delta_t+\epsilon_t+\eta_t,
+  \tag{1}\label{eq:coverage-decomposition}
+\]
+with either side clipped to \([0,1]\) when necessary.
+
+\emph{Proof.}
+By construction, \(\widehat H_{t,w}(q_t)\geq p\).  Therefore
+\(H_{t,w}(q_t)\geq p-\epsilon_t\), and then
+\(F_t(q_t)\geq p-\epsilon_t-\delta_t\).  Minimality of the inclusive quantile
+gives \(\widehat H_{t,w}(q_t^-)<p\).  The empirical jump at \(q_t\) is the
+total normalized weight of all calibration scores tied there and is at most
+\(\eta_t\).  Thus
+\(\widehat H_{t,w}(q_t)\leq p+\eta_t\), which implies
+\(H_{t,w}(q_t)\leq p+\eta_t+\epsilon_t\) and finally the stated upper bound.
+\hfill\(\square\)
+
+Equation~\eqref{eq:coverage-decomposition} is a decomposition, not a
+distribution-free guarantee.  Recency weighting can reduce \(\delta_t\) when
+the recent past better matches the present, but concentrating the weights can
+increase \(\epsilon_t\) and \(\eta_t\).  Conversely, long histories may reduce
+sampling variability while increasing temporal mismatch.  The proposed drift
+features are therefore empirical proxies for choosing this bias--variance
+trade-off; they do not certify a bound on \(\delta_t\).
+
+\subsection{Effective Sample Size and Half-Life Limits}
+
+A transparent diagnostic for weight concentration is Kish's effective sample
+size
+\[
+  N_{\mathrm{eff}}
+  =\frac{(\sum_i w_i)^2}{\sum_i w_i^2}
+  =\frac{1}{\sum_i\bar w_i^2}.
+\]
+For one score at each of \(W\) equally spaced time units and geometric weights
+\(w_j=r^j\), \(j=0,\ldots,W-1\), where \(r=2^{-1/h}\), direct summation gives
+\[
+  N_{\mathrm{eff}}(h,W)
+  =\frac{1+r}{1-r}\frac{1-r^W}{1+r^W}.
+  \tag{2}\label{eq:neff-geometric}
+\]
+For a long regular stream, the limiting values are approximately 20.21, 40.40,
+and 86.57 for half-lives 7, 14, and 30, respectively.  These numbers are
+illustrative rather than the experiment's actual effective sample sizes: the
+implementation weights every query--label score, multiple scores share a
+timestamp, batch sizes vary, and the rolling pool truncates by score count.
+The artifact therefore records \(N_{\mathrm{eff}}\) from the realized weights
+whenever it is used for empirical interpretation.
+
+As \(h\rightarrow\infty\), \(r\rightarrow1\) and the weighted rule approaches
+equal weighting within the same rolling pool.  It need not exactly equal the
+named rolling conformal baseline because that baseline uses the
+finite-sample-corrected order statistic while the MVP weighted rule uses the
+uncorrected level \(1-\alpha\).  As \(h\rightarrow0\), weight concentrates on
+the newest timestamp represented in the pool; all scores sharing that newest
+timestamp retain equal age and can retain nonzero mass.  Thus ``short
+half-life'' does not mean a single calibration observation in a batched TKG.
+
+\paragraph{Corollary (ranking invariance).}
+For a fixed scorer and test queries, changing \(q_t\) changes set membership but
+not the ordering of candidates.  MRR and Hits@\(K\) are consequently identical
+for all post-hoc calibration rules applied to the same scored condition.
+Calibration can trade coverage against set size or abstention, but it cannot
+repair ranking damage caused by deleted training history.  Ranking metrics are
+therefore reported once per scorer--deletion--seed condition rather than as if
+they were improvements attributable to a post-hoc calibration rule.
+
+Finally, formal weighted conformal results require additional structure, such
+as weighted exchangeability or valid likelihood-ratio weights, and formal
+non-exchangeable constructions may assign mass to the test point at
+\(+\infty\).  Equation~\eqref{eq:coverage-decomposition} does not replace
+those results.  It states the precise deterministic error terms for the
+implemented empirical quantile and makes clear which terms the route-A
+experiments must measure or stress.

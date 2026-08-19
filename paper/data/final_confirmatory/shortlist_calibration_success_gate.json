@@ -1,0 +1,15 @@
+{
+  "criteria": {
+    "full_set_coverage_delta_ci_low_at_least_minus_0p05": true,
+    "label_coverage_at_least_target_minus_0p02": true,
+    "label_coverage_delta_ci_low_at_least_minus_0p02": true,
+    "relative_mean_size_reduction_ci_low_positive": true
+  },
+  "effect_deletion_rate": 0.3,
+  "rank_rolling_full_set_coverage_mean": 0.8880520551171829,
+  "rank_rolling_mean_size_mean": 3668.160876221882,
+  "rank_rolling_observed_label_coverage_mean": 0.8991812623069748,
+  "status": "evaluated",
+  "supported": true,
+  "target_coverage": 0.9
+}

@@ -1,0 +1,58 @@
+{
+  "block_length": 7,
+  "bootstrap_seed": 20260849,
+  "candidate_count": 21,
+  "condition_count": 20,
+  "created_at": "2026-08-18T22:53:51+08:00",
+  "definition": {
+    "adaptive_mass_rolling": "APS/RAPS candidate selected on calibration-only validation batches, then evaluated with a rolling threshold over strictly past scores.",
+    "selection_tolerance": "Allowed validation observed-label coverage shortfall below the target when selecting the smallest APS/RAPS candidate.",
+    "target_coverage": "Nominal conformal target used for margin, rank, and mass thresholds."
+  },
+  "deletion_rates": [
+    0.0,
+    0.1,
+    0.2,
+    0.3
+  ],
+  "device": "cuda",
+  "effect_deletion_rate": 0.3,
+  "iterations": 20000,
+  "methods": [
+    "margin_rolling",
+    "rank_rolling",
+    "adaptive_mass_rolling"
+  ],
+  "output_name": "final_confirmatory",
+  "outputs": {
+    "score_adaptive_sensitivity_by_seed.csv": "0c262650400530c7f621f6fb61589288089a51a6cc35c9e8bd0ccdbc8d02464c",
+    "score_adaptive_sensitivity_by_timestamp.csv": "b9178ba4c1d77b85ad9b790f3c4960805c104f0995b6f36df94baabe0d48eaf7",
+    "score_adaptive_sensitivity_effects.csv": "c4da480f8883f48fcc3a9472e7302adff859cd89d8cf349fd9f6b44ffb8b2080",
+    "score_adaptive_sensitivity_manifest.json": "689ae6dc109f3971b79feec093e9eb691062b0e616a1a57cf69b327487f394ae",
+    "score_adaptive_sensitivity_paper_table.csv": "c487b7a3dba31c187a64df93d69af323c8e63f05c453265082b2274b909282ad",
+    "score_adaptive_sensitivity_selection_by_condition.csv": "5cdfee8a6ce7c585020c4702bb0bb9327f0b3f287464dd7a7b12d8d6c6746453",
+    "score_adaptive_sensitivity_selection_summary.csv": "42130ce51d2f145bde04357746c77049de6d53c6a22a6e116285c0adaf3fc8b2",
+    "score_adaptive_sensitivity_success_table.csv": "8a00a0f38d28553e2aa6ed3e9bdb57963c2b06dbf777b0b67b80f48dd2d9c35a",
+    "score_adaptive_sensitivity_summary.csv": "94d05c3585f52897c69b6951d02653e3ee3dd7164f14320bef2c408fbf72d706"
+  },
+  "run_root": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "script_sha256": "e47454a5014ad11ccdcfe34f0d6b75229d550c897afe08ce84c540776e8646d8",
+  "seeds": [
+    17,
+    29,
+    43,
+    59,
+    71
+  ],
+  "selection_tolerances": [
+    0.0,
+    0.01,
+    0.02,
+    0.03
+  ],
+  "target_coverages": [
+    0.88,
+    0.9,
+    0.92
+  ]
+}

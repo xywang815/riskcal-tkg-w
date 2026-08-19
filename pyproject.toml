@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "riskcal-tkg"
+version = "0.1.0"
+description = "Drift-aware conformal calibration experiments for temporal knowledge graphs"
+requires-python = ">=3.11"
+dependencies = [
+  "matplotlib",
+  "numpy",
+  "pandas",
+  "psutil",
+  "pyarrow",
+  "PyYAML",
+  "torch",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

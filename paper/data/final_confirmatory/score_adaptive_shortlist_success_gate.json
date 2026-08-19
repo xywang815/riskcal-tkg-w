@@ -1,0 +1,17 @@
+{
+  "adaptive_full_set_coverage_mean": 0.8874396419738547,
+  "adaptive_mean_size_mean": 3318.9653162171717,
+  "adaptive_observed_label_coverage_mean": 0.8987097108508653,
+  "criteria": {
+    "full_set_coverage_delta_vs_margin_ci_low_at_least_minus_0p05": true,
+    "label_coverage_at_least_target_minus_0p02": true,
+    "label_coverage_delta_vs_margin_ci_low_at_least_minus_0p02": true,
+    "relative_mean_size_reduction_vs_margin_ci_low_positive": true,
+    "relative_mean_size_reduction_vs_rank_ci_low_positive": true
+  },
+  "effect_deletion_rate": 0.3,
+  "status": "evaluated",
+  "supported_vs_margin": true,
+  "target_coverage": 0.9,
+  "upgrade_over_rank_supported": true
+}

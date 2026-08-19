@@ -1,0 +1,28 @@
+{
+  "baselines": [
+    "frequency",
+    "relation_frequency",
+    "repeat"
+  ],
+  "created_at": "2026-08-16T20:45:38+08:00",
+  "data_root": "data/raw/icews14",
+  "deletion_rates": [
+    0.0,
+    0.1,
+    0.2,
+    0.3
+  ],
+  "history_modes": {
+    "prequential": "retained training plus calibration facts before the first test timestamp, then test facts are added only after each complete timestamp batch is predicted",
+    "train_only": "retained training facts only"
+  },
+  "mask_audits_validated": 20,
+  "run_root": "/private/tmp/riskcal_tkg_baseline_source/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "seeds": [
+    17,
+    29,
+    43,
+    59,
+    71
+  ]
+}

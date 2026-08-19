@@ -1,0 +1,174 @@
+{
+  "block_length": 7,
+  "bootstrap_seed": 20260818,
+  "candidate_count": 21,
+  "candidates": [
+    {
+      "k_reg": 0,
+      "name": "aps",
+      "penalty": 0.0
+    },
+    {
+      "k_reg": 50,
+      "name": "raps_k50_lam0p0001",
+      "penalty": 0.0001
+    },
+    {
+      "k_reg": 50,
+      "name": "raps_k50_lam0p0005",
+      "penalty": 0.0005
+    },
+    {
+      "k_reg": 50,
+      "name": "raps_k50_lam0p001",
+      "penalty": 0.001
+    },
+    {
+      "k_reg": 50,
+      "name": "raps_k50_lam0p002",
+      "penalty": 0.002
+    },
+    {
+      "k_reg": 100,
+      "name": "raps_k100_lam0p0001",
+      "penalty": 0.0001
+    },
+    {
+      "k_reg": 100,
+      "name": "raps_k100_lam0p0005",
+      "penalty": 0.0005
+    },
+    {
+      "k_reg": 100,
+      "name": "raps_k100_lam0p001",
+      "penalty": 0.001
+    },
+    {
+      "k_reg": 100,
+      "name": "raps_k100_lam0p002",
+      "penalty": 0.002
+    },
+    {
+      "k_reg": 250,
+      "name": "raps_k250_lam0p0001",
+      "penalty": 0.0001
+    },
+    {
+      "k_reg": 250,
+      "name": "raps_k250_lam0p0005",
+      "penalty": 0.0005
+    },
+    {
+      "k_reg": 250,
+      "name": "raps_k250_lam0p001",
+      "penalty": 0.001
+    },
+    {
+      "k_reg": 250,
+      "name": "raps_k250_lam0p002",
+      "penalty": 0.002
+    },
+    {
+      "k_reg": 500,
+      "name": "raps_k500_lam0p0001",
+      "penalty": 0.0001
+    },
+    {
+      "k_reg": 500,
+      "name": "raps_k500_lam0p0005",
+      "penalty": 0.0005
+    },
+    {
+      "k_reg": 500,
+      "name": "raps_k500_lam0p001",
+      "penalty": 0.001
+    },
+    {
+      "k_reg": 500,
+      "name": "raps_k500_lam0p002",
+      "penalty": 0.002
+    },
+    {
+      "k_reg": 1000,
+      "name": "raps_k1000_lam0p0001",
+      "penalty": 0.0001
+    },
+    {
+      "k_reg": 1000,
+      "name": "raps_k1000_lam0p0005",
+      "penalty": 0.0005
+    },
+    {
+      "k_reg": 1000,
+      "name": "raps_k1000_lam0p001",
+      "penalty": 0.001
+    },
+    {
+      "k_reg": 1000,
+      "name": "raps_k1000_lam0p002",
+      "penalty": 0.002
+    }
+  ],
+  "condition_count": 20,
+  "created_at": "2026-08-18T17:07:30+08:00",
+  "definition": {
+    "adaptive_mass_rolling": "APS/RAPS candidate selected on calibration-only validation batches, then evaluated with a rolling threshold over strictly past scores.",
+    "aps_rolling": "Rolling conformal set using cumulative softmax probability mass as the nonconformity score.",
+    "raps": "APS cumulative mass plus lambda times the amount by which a label rank exceeds k_reg."
+  },
+  "deletion_rates": [
+    0.0,
+    0.1,
+    0.2,
+    0.3
+  ],
+  "device": "cuda",
+  "effect_deletion_rate": 0.3,
+  "iterations": 20000,
+  "methods": [
+    "margin_rolling",
+    "rank_rolling",
+    "aps_rolling",
+    "adaptive_mass_rolling"
+  ],
+  "output_name": "final_confirmatory",
+  "outputs": {
+    "score_adaptive_shortlist_by_seed.csv": "59f106609919fbeb5a484956d9c6fb0f20385652890e1ae28e033764a76dfd50",
+    "score_adaptive_shortlist_by_timestamp.csv": "06faa9fdaf8e78657520bf1bb2b6c1505c3e2f56694e172117ef2d6323876113",
+    "score_adaptive_shortlist_effects.csv": "db7d1dc2ac1074c5fa161e9d2039a53990273f1758f94cfab7253179878f1d09",
+    "score_adaptive_shortlist_manifest.json": "d0164c3bb2283ff6c21de19bbd945c15e7bbfeba3ee751512a8456240df53e45",
+    "score_adaptive_shortlist_paper_table.csv": "f2589bb0468e6b7f6d40b37503b6c5560116138c094cb1728f905681e926a222",
+    "score_adaptive_shortlist_selection_by_condition.csv": "1f67f7d9e2c4eba9e2c06cccffbe67a865fe2d7bbc97148f1bb5d3bbba1122be",
+    "score_adaptive_shortlist_selection_summary.csv": "a55e04dc93bacd0d1da9c6b44b9a631468f1e01ac5cc63d75ef80919b325f3a9",
+    "score_adaptive_shortlist_success_gate.json": "183aeef30f613e36b51d17dae8b4e2c1e8797b2048ef3bc1b8c2d1caa96ac24f",
+    "score_adaptive_shortlist_summary.csv": "42ef3b09cf8cf8d86511b13af7f3817a4bfa51b2223abad3720abedcea2b6785"
+  },
+  "run_root": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "script_sha256": "7b66b27ffd13d2e698117558b75d6218b87ed2c06b479a9068235319a2fea233",
+  "seeds": [
+    17,
+    29,
+    43,
+    59,
+    71
+  ],
+  "selection_tolerance": 0.02,
+  "success_gate": {
+    "adaptive_full_set_coverage_mean": 0.8874396419738547,
+    "adaptive_mean_size_mean": 3318.9653162171717,
+    "adaptive_observed_label_coverage_mean": 0.8987097108508653,
+    "criteria": {
+      "full_set_coverage_delta_vs_margin_ci_low_at_least_minus_0p05": true,
+      "label_coverage_at_least_target_minus_0p02": true,
+      "label_coverage_delta_vs_margin_ci_low_at_least_minus_0p02": true,
+      "relative_mean_size_reduction_vs_margin_ci_low_positive": true,
+      "relative_mean_size_reduction_vs_rank_ci_low_positive": true
+    },
+    "effect_deletion_rate": 0.3,
+    "status": "evaluated",
+    "supported_vs_margin": true,
+    "target_coverage": 0.9,
+    "upgrade_over_rank_supported": true
+  },
+  "target_coverage": 0.9
+}

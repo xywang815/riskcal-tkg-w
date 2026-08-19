@@ -1,0 +1,8 @@
+window_label,selected_half_life,condition_count,condition_fraction
+count_1000,inf,20,1
+count_2000,14,1,0.05
+count_2000,7,7,0.35
+count_2000,inf,12,0.6
+count_250,7,20,1
+count_500,7,19,0.95
+count_500,inf,1,0.05

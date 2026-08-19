@@ -1,0 +1,47 @@
+{
+  "condition_count": 20,
+  "count_windows": [
+    250,
+    500,
+    1000,
+    2000
+  ],
+  "definition": {
+    "effective_sample_size": "Kish effective sample size computed from half-life weights on the actual score pool available before each test timestamp.",
+    "expanding": "Unweighted conformal threshold over all previous final-calibration and prequential test scores.",
+    "rolling_count_W": "Unweighted conformal threshold over the most recent W scores.",
+    "time_window_D": "Unweighted conformal threshold over strictly earlier scores whose internal timestamp IDs fall in the previous D timestamp blocks.",
+    "weighted_count_W": "Exponentially weighted threshold over the most recent W scores, using the half-life selected on calibrator-tuning and selector-validation batches for that W."
+  },
+  "device": "cuda",
+  "generated_at": "2026-08-17T14:58:51+08:00",
+  "half_lives": [
+    "7",
+    "14",
+    "30",
+    "inf"
+  ],
+  "method_timestamp_rows": 20440,
+  "outputs": {
+    "deletion_interaction_by_seed.csv": "1833050cf3bc34d8a2b0f48b683cde02da62fada5d36d86b6e394613b8cfde16",
+    "half_life_selection_by_condition.csv": "8975cf3025b4d6721bda6fe00a4fd5eb8bb63acaccc979efaed05dcfaeaf2878",
+    "half_life_selection_summary.csv": "3fc5b299c04bce0eff6401d9526e309cf259b8ae2c0c7e492820c45a22c7af07",
+    "pool_diagnostics_by_timestamp.csv": "9abf1bc0387aed99d3172e98e1b63390442b3d91972e5c30f948afd5032596df",
+    "pool_diagnostics_summary.csv": "242f21f2c3d6f470170d6b8fb927206092834e7f7d972494f6e39a78bdbf4bb9",
+    "window_ablation_by_seed.csv": "0c94d2dae4272388c0ca1370d45defbe01e06380c60b6a899923c89a468bcb44",
+    "window_ablation_by_timestamp.csv": "506b9191719f8f6d33845255701034e7ab10f39d723392dd19ad63db8554904c",
+    "window_ablation_manifest.json": "206d517c778d1d663bf879b3f90c9699a820b52d5c044a6e8fca83653db1cafe",
+    "window_ablation_summary.csv": "15e9d2d6a7e0c492bce12e7e50540ce774eb3414ab72c81c4d63bdae281f4a39"
+  },
+  "pool_timestamp_rows": 29200,
+  "run_root": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "script_sha256": "812616fc6a83b0437c575436d014b18c2adaeb1008bed6c13dae00ab5f14ead1",
+  "selection_rows": 320,
+  "target_coverage": 0.9,
+  "time_windows": [
+    3,
+    7,
+    14,
+    30
+  ]
+}

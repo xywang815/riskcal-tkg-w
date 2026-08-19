@@ -1,0 +1,66 @@
+{
+  "block_length": 7,
+  "bootstrap_seed": 20260818,
+  "condition_count": 20,
+  "created_at": "2026-08-18T14:22:17+08:00",
+  "definition": {
+    "full_set_coverage": "Fraction of unique temporal queries for which every observed answer label is included.",
+    "margin_rolling": "Original score-margin conformal threshold over the most recent 1000 strictly past nonconformity scores.",
+    "margin_static": "Original score-margin conformal threshold fixed from final initial calibration scores.",
+    "observed_label_coverage": "Marginal coverage over observed subject/object prediction labels.",
+    "rank_expanding": "Top-k prediction set where k is the conformal quantile of all strictly past true-label ranks.",
+    "rank_rolling": "Top-k prediction set where k is the conformal quantile of the most recent 1000 strictly past true-label ranks.",
+    "rank_static": "Top-k prediction set where k is the conformal quantile of true-label ranks on final initial calibration scores."
+  },
+  "deletion_rates": [
+    0.0,
+    0.1,
+    0.2,
+    0.3
+  ],
+  "device": "cuda",
+  "effect_deletion_rate": 0.3,
+  "iterations": 20000,
+  "methods": [
+    "margin_static",
+    "margin_rolling",
+    "rank_static",
+    "rank_expanding",
+    "rank_rolling"
+  ],
+  "output_name": "final_confirmatory",
+  "outputs": {
+    "shortlist_calibration_by_seed.csv": "102651cef502521c83b2ccf1301ccf8a3d534cb8cbae17d78f2710cd9f95307f",
+    "shortlist_calibration_by_timestamp.csv": "2b525c7f484a88f654920223bff61ed90603a6b64dc50f916b1e81f75accff1d",
+    "shortlist_calibration_effects.csv": "8587d6e0ec6d38447c494ea1bb5d22a45b56ad9541b33b1a2f02733d65bde3bd",
+    "shortlist_calibration_manifest.json": "2081b30e88552151132b288cbbdfec2ec9396e7f2e7fa86e60f59009d7a2acc5",
+    "shortlist_calibration_paper_table.csv": "0a398df3247992983efaa92017d1646ec7c603d629cc02d201116397b2f54a41",
+    "shortlist_calibration_success_gate.json": "047d8f5999a84ff7b47f4926d3862b74d337a936518432704a0d81f2ccf0fcc9",
+    "shortlist_calibration_summary.csv": "72d267a8ab91cfe213da0ad26b579406cc6eabcd576969559218be2afb0a4b70"
+  },
+  "run_root": "/root/riskcal_tkg_mvp/results/final_confirmatory/20260815T110014908249Z-eb736dbf6658",
+  "script_sha256": "2e05c14144a177d024ae96952b09f5c95e20a46a500bf5f587388618d87bc592",
+  "seeds": [
+    17,
+    29,
+    43,
+    59,
+    71
+  ],
+  "success_gate": {
+    "criteria": {
+      "full_set_coverage_delta_ci_low_at_least_minus_0p05": true,
+      "label_coverage_at_least_target_minus_0p02": true,
+      "label_coverage_delta_ci_low_at_least_minus_0p02": true,
+      "relative_mean_size_reduction_ci_low_positive": true
+    },
+    "effect_deletion_rate": 0.3,
+    "rank_rolling_full_set_coverage_mean": 0.8880520551171829,
+    "rank_rolling_mean_size_mean": 3668.160876221882,
+    "rank_rolling_observed_label_coverage_mean": 0.8991812623069748,
+    "status": "evaluated",
+    "supported": true,
+    "target_coverage": 0.9
+  },
+  "target_coverage": 0.9
+}

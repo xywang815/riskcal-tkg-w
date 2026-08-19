@@ -1,0 +1,13 @@
+statistic,deletion_rate,target,block_length,observed,ci95_low,ci95_high,pvalue_positive,iterations,seed_count,timestamp_count,weighting
+rolling_undercoverage_reduction_vs_static,0.3,0.9,3,0.07226322889,0.05799157287,0.08772602287,4.999750012e-05,20000,5,73,timestamp_macro
+rolling_micro_coverage_gain_vs_static,0.3,0.9,3,0.07629806198,0.06307596841,0.09128298735,4.999750012e-05,20000,5,73,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,3,0.2179788223,0.2082166052,0.2284547603,4.999750012e-05,20000,5,73,query_count
+rolling_undercoverage_reduction_vs_static,0.3,0.9,7,0.07226322889,0.05345973797,0.09380235291,4.999750012e-05,20000,5,73,timestamp_macro
+rolling_micro_coverage_gain_vs_static,0.3,0.9,7,0.07629806198,0.05952044376,0.09622123083,4.999750012e-05,20000,5,73,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,7,0.2179788223,0.2069925984,0.2296653165,4.999750012e-05,20000,5,73,query_count
+rolling_undercoverage_reduction_vs_static,0.3,0.9,14,0.07226322889,0.04918662414,0.09873545513,4.999750012e-05,20000,5,73,timestamp_macro
+rolling_micro_coverage_gain_vs_static,0.3,0.9,14,0.07629806198,0.05572699007,0.1011648901,4.999750012e-05,20000,5,73,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,14,0.2179788223,0.2083472644,0.2281329501,4.999750012e-05,20000,5,73,query_count
+rolling_undercoverage_reduction_vs_static,0.3,0.9,21,0.07226322889,0.0473544576,0.09908609851,4.999750012e-05,20000,5,73,timestamp_macro
+rolling_micro_coverage_gain_vs_static,0.3,0.9,21,0.07629806198,0.05452555296,0.1019114655,4.999750012e-05,20000,5,73,query_count
+scorer_mrr_gain_vs_frequency,0.3,0.9,21,0.2179788223,0.2080465095,0.2278348325,4.999750012e-05,20000,5,73,query_count
