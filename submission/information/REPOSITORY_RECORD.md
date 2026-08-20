@@ -4,7 +4,7 @@ Repository URL: https://github.com/xywang815/riskcal-tkg-w
 
 License: MIT License
 
-Recommended release tag: `v1.0-information-submission`
+Submission version tag: `v1.0-information-submission`
 
 Recommended release title: `RiskCal-TKG MDPI Information submission artifacts`
 
@@ -23,7 +23,8 @@ temporal-knowledge-graph, conformal-prediction, calibration, icews14, reproducib
 Archival status:
 
 - GitHub repository: created and public.
-- Stable GitHub release: recommended before submission.
+- Stable Git tag: created and pushed.
+- GitHub Release page: optional but recommended before submission.
 - Zenodo DOI: optional but recommended after a stable release is created.
 
 Data availability wording if no Zenodo DOI is available:

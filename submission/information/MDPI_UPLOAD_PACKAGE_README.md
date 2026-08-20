@@ -8,6 +8,8 @@ Manuscript title: `Prequential Answer-Set Calibration for Temporal Knowledge Gra
 
 Repository URL: https://github.com/xywang815/riskcal-tkg-w
 
+Submission version tag: `v1.0-information-submission`
+
 ## Primary Upload Files
 
 - `riskcal_tkg_mdpi_information_submission_20260820.pdf`: compiled manuscript PDF using the MDPI `Information` template.
@@ -29,7 +31,7 @@ Repository URL: https://github.com/xywang815/riskcal-tkg-w
 - Confirm affiliation, email address, and funding grant number.
 - Confirm whether a special issue is selected.
 - Confirm payment/APC details in the MDPI submission system.
-- Optionally create a GitHub release and Zenodo DOI before submission.
+- Optionally create a GitHub Release from the submission tag and archive it on Zenodo before submission.
 
 ## Scope Statement for Editors
 

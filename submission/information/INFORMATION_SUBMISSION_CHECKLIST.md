@@ -31,8 +31,8 @@ Target journal: MDPI `Information`.
 - License: MIT License.
 - Included artifacts: code, configurations, tests, MDPI manuscript source, derived paper-facing result tables, and figures.
 - Excluded artifacts: raw ICEWS14 files, checkpoints, logs, build products, transfer archives, and server access details.
-- Recommended before formal submission: create a GitHub release named `v1.0-information-submission`.
-- Optional but stronger: archive the release on Zenodo and add the DOI to the Data Availability Statement.
+- Stable Git tag created: `v1.0-information-submission`.
+- Optional but stronger: create a GitHub Release from this tag, archive the release on Zenodo, and add the DOI to the Data Availability Statement.
 
 ## Files to Upload in the MDPI System
 
