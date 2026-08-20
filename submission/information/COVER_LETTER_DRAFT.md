@@ -12,8 +12,7 @@ To support review and reproducibility, we provide source code, configurations, f
 
 https://github.com/xywang815/riskcal-tkg-w
 
-If an archival release is created before submission, this sentence can be
-updated to include the Zenodo DOI.
+If an archival release is created before submission, we will also cite the corresponding DOI in the Data Availability Statement.
 
 Thank you for considering our manuscript.
 

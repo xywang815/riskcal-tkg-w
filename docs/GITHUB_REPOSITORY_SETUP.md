@@ -52,10 +52,10 @@ The repository can keep derived CSV/JSON results because they are needed for rev
 
 ## Local Terminal Commands
 
-Run these in your Mac Terminal after the repository is created on GitHub:
+Run these in your Mac Terminal after the repository is created on GitHub. Replace `<project-dir>` with the local project directory on your own computer:
 
 ```bash
-cd /Users/wangxinyu/Documents/Codex/riskcal_tkg_mvp
+cd <project-dir>
 git init
 git status
 git add README.md LICENSE pyproject.toml src scripts configs tests data paper submission docs .gitignore

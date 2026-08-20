@@ -2,57 +2,48 @@
 
 Target journal: MDPI `Information`.
 
-## Manuscript Changes Required Before Submission
+## Manuscript Status
 
-- Change title to a narrower title with `An ICEWS14 Diagnostic Study`.
-- Replace `adaptive mass rolling` with `validation-selected RAPS rolling`.
-- State clearly that RAPS selection uses calibration-only validation batches, not test-period online selection.
-- Specify the RAPS/APS candidate grid:
+- Title narrowed to include `An ICEWS14 Diagnostic Study`.
+- The manuscript uses the MDPI `Information` LaTeX template.
+- The method name in the manuscript is `validation-selected RAPS rolling`.
+- RAPS selection is described as calibration-only validation, not test-period online selection.
+- The APS/RAPS candidate grid is stated:
   - APS baseline candidate;
   - RAPS `k` grid: `{50, 100, 250, 500, 1000}`;
   - RAPS `lambda` grid: `{1e-4, 5e-4, 1e-3, 2e-3}`;
   - softmax temperature `T=1`;
   - selection tolerance `0.02`;
   - final selected candidate in the main 0.90 setting: `k=50`, `lambda=1e-4`.
-- Remove any remaining `Route A`, `route-A`, or internal project terminology from the manuscript and supplement.
-- Convert to the MDPI LaTeX template for `Information`.
-- Add MDPI-required back matter:
-  - Author Contributions;
-  - Funding;
-  - Institutional Review Board Statement, if required by template;
-  - Informed Consent Statement, if required by template;
-  - Data Availability Statement;
-  - Conflicts of Interest;
-  - Acknowledgments, if needed.
-- Add a separate `Limitations and Practical Implications` section.
-- Compress abstract to approximately 230--245 words.
-- Ensure the manuscript never claims:
-  - a new distribution-free coverage theorem;
+- The abstract is in the requested 230--245 word range.
+- A separate `Limitations and Practical Implications` section is included.
+- The back matter includes Author Contributions, Funding, IRB statement, Informed Consent statement, Data Availability Statement, and Conflicts of Interest.
+- The manuscript is framed as a diagnostic reliability-utility study under strict prequential ordering.
+- The manuscript does not claim:
+  - a new distribution-free coverage theorem under temporal drift;
   - state-of-the-art temporal KG ranking;
   - guaranteed conditional coverage;
-  - performance beyond ICEWS14 without supporting experiments.
+  - conclusions beyond the stated ICEWS14 protocol.
 
-## Repository Requirements
+## Repository Status
 
-- Public GitHub repository created: `https://github.com/xywang815/riskcal-tkg-w`.
-- Selected code license: MIT License.
-- Add a stable release before submission.
-- Preferably archive the release on Zenodo and cite the DOI.
-- Data Availability Statement must contain a real public URL or DOI, not `will be added`.
+- Public GitHub repository: `https://github.com/xywang815/riskcal-tkg-w`.
+- License: MIT License.
+- Included artifacts: code, configurations, tests, MDPI manuscript source, derived paper-facing result tables, and figures.
+- Excluded artifacts: raw ICEWS14 files, checkpoints, logs, build products, transfer archives, and server access details.
+- Recommended before formal submission: create a GitHub release named `v1.0-information-submission`.
+- Optional but stronger: archive the release on Zenodo and add the DOI to the Data Availability Statement.
 
-## Cover Letter Points
+## Files to Upload in the MDPI System
 
-The cover letter should state:
+- Manuscript PDF: `riskcal_tkg_mdpi_information_submission_20260820.pdf`.
+- LaTeX source package: `riskcal_tkg_mdpi_information_source_20260820.zip`.
+- Cover letter: use `COVER_LETTER_DRAFT.md` as the text source.
+- Repository URL for data/code availability: `https://github.com/xywang815/riskcal-tkg-w`.
 
-- The paper is a diagnostic study of prequential answer-set calibration for temporal KG forecasting.
-- The contribution is reliability-utility evaluation under strict temporal ordering.
-- The study does not claim a new distribution-free theorem under temporal drift.
-- The study does not claim state-of-the-art ranking performance.
-- The paper provides reproducibility artifacts: code, configs, seeds, deletion masks or generation scripts, paper-facing result tables, and figures.
+## Author Confirmation Before Submission
 
-## Information-Specific Submission Notes
-
-- Use the MDPI LaTeX template and select `Information` as the journal.
-- Check whether the selected article type is `Article`.
-- Confirm APC and any discount/waiver information in the MDPI submission system before final submission.
-- Confirm whether the special issue, if any, has additional formatting or data-sharing requirements.
+- Confirm that the affiliation, email address, and funding grant number are correct.
+- Confirm whether the manuscript is submitted as a regular Article or to a special issue.
+- Confirm whether a Zenodo DOI will be created before first submission or only after review.
+- Confirm APC/payment details in the MDPI submission system.
