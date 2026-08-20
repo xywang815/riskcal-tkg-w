@@ -1,61 +1,40 @@
-\documentclass[10pt,twocolumn]{article}
+% LaTeX support: latex@mdpi.com
+% MDPI Information submission draft generated from the project manuscript.
+\documentclass[information,article,submit,oneauthor,pdftex]{Definitions/mdpi}
+
+\firstpage{1}
+\makeatletter
+\setcounter{page}{\@firstpage}
+\makeatother
+\pubvolume{1}
+\issuenum{1}
+\articlenumber{0}
+\pubyear{2026}
+\copyrightyear{2026}
+\history{Received: date; Accepted: date; Published: date}
 
 \usepackage{amsmath,amssymb}
 \usepackage{array}
-\usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{multirow}
-\usepackage{url}
-\usepackage[hidelinks]{hyperref}
-\usepackage{enumitem}
 \usepackage{placeins}
-\usepackage{caption}
-\usepackage[margin=0.72in,columnsep=0.24in]{geometry}
 
 \newcommand{\cov}{\operatorname{Cov}}
 \newcommand{\TV}{\operatorname{TV}}
 \newcommand{\KS}{\operatorname{KS}}
 \newcommand{\Rec}{\operatorname{Recurrence}}
 
-\title{Prequential Answer-Set Calibration for Temporal Knowledge Graph
-Forecasting: An ICEWS14 Diagnostic Study}
+\Title{Prequential Answer-Set Calibration for Temporal Knowledge Graph Forecasting: An ICEWS14 Diagnostic Study}
 
-\author{Xinyu Wang\\
-\small Anhui Institute of Information Technology\\
-\small \texttt{xywang68@iflytek.com}}
+\Author{Xinyu Wang $^{1,*}$}
+\AuthorNames{Xinyu Wang}
+\address{%
+$^{1}$ \quad Anhui Institute of Information Technology, Wuhu 241000, China}
+\corres{Correspondence: xywang68@iflytek.com}
+
+\abstract{Temporal knowledge graph (TKG) forecasting is usually evaluated by ranking accuracy, but downstream systems may need candidate answer sets whose empirical coverage remains reliable as the stream evolves. We evaluate a leakage-controlled prequential calibration protocol on ICEWS14. A continuous-time DistMult scorer is frozen after training; at each test timestamp, all subject and object queries are predicted before labels are revealed, and calibration pools are updated only after the complete timestamp batch. Across five seeds and controlled training-history deletion up to 30\%, static empirical calibration under-covers the later stream: at 30\% deletion, observed-label coverage is 0.8235 against a 0.90 target. Equal-weight rolling calibration reaches 0.8998, with paired timestamp-block undercoverage reduction 0.0723 (95\% CI [0.0535, 0.0938]). This reliability repair is costly: rolling calibration returns 3,802.5 entities on average from a 7,128-entity vocabulary, and 36.5\% of unique-query sets equal the full vocabulary. Rank-threshold rolling reduces mean size to 3,668.2 with observed-label coverage 0.8992, but full-set query coverage decreases to 0.8881. Validation-selected RAPS rolling, chosen on calibration-only validation batches from a fixed APS/RAPS grid, selects k=50 and lambda=0.0001 with tolerance 0.02 and reaches coverage 0.8987 with mean size 3,319.0, but it does not dominate rank thresholding in the tail or at target 0.92. Relation-side, delayed-feedback, window, and set-size diagnostics support a bounded conclusion: rolling prequential calibration improves observed-label reliability while exposing a substantial reliability--utility trade-off.}
+
+\keyword{temporal knowledge graph; link forecasting; uncertainty quantification; prequential evaluation; calibration; conformal prediction; distribution shift; selective prediction}
 
 \begin{document}
-\maketitle
-
-\begin{abstract}
-Temporal knowledge graph (TKG) forecasting is usually evaluated by ranking
-accuracy, but downstream systems may need candidate answer sets whose empirical
-coverage remains reliable as the stream evolves. We evaluate a
-leakage-controlled prequential calibration protocol on ICEWS14. A
-continuous-time DistMult scorer is frozen after training; at each test
-timestamp, all subject and object queries are predicted before labels are
-revealed, and calibration pools are updated only after the complete timestamp
-batch. Across five seeds and controlled training-history deletion up to 30\%,
-static empirical calibration under-covers the later stream: at 30\% deletion,
-observed-label coverage is 0.8235 against a 0.90 target. Equal-weight rolling
-calibration reaches 0.8998, with paired timestamp-block undercoverage reduction
-0.0723 (95\% CI [0.0535, 0.0938]). This reliability repair is costly: rolling
-calibration returns 3,802.5 entities on average from a 7,128-entity vocabulary,
-and 36.5\% of unique-query sets equal the full vocabulary. Rank-threshold
-rolling reduces mean size to 3,668.2 with observed-label coverage 0.8992, but
-full-set query coverage decreases to 0.8881. Validation-selected RAPS rolling,
-chosen on calibration-only validation batches from a fixed APS/RAPS grid,
-selects \(k=50\) and \(\lambda=10^{-4}\) with tolerance 0.02 and reaches
-coverage 0.8987 with mean size 3,319.0, but it does not dominate rank
-thresholding in the tail or at target 0.92. Relation-side, delayed-feedback,
-window, and set-size diagnostics support a bounded conclusion: rolling
-prequential calibration improves observed-label reliability while exposing a
-substantial reliability--utility trade-off.
-\end{abstract}
-
-\noindent\textbf{Keywords---}temporal knowledge graph, link forecasting,
-uncertainty quantification, prequential evaluation, calibration, conformal
-prediction, distribution shift, selective prediction.
 
 \section{Introduction}
 \label{sec:introduction}
@@ -518,7 +497,7 @@ main analysis. The benchmark is temporally sorted before splitting:
 the earliest 60\% of timestamps train the scorer, the next 20\% support
 validation and calibration roles, and the final 20\% form the test stream.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Dataset statistics after deterministic normalization and strict
 timestamp splitting.}
@@ -530,7 +509,7 @@ Dataset & Entities & Relations & Facts & Times & Train times & Dev/cal times & T
 ICEWS14 & 7,128 & 230 & 90,730 & 365 & 1--219 & 220--292 & 293--365\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 The ICEWS14 manifest contains 52,993 training, 18,439 calibration, and 19,298
 test facts and records file hashes for reproducibility. Paper-facing ranges use
@@ -703,14 +682,14 @@ and 0.8235 at 30\% deletion, both below the 0.90 target.
 Figure~\ref{fig:coverage-time} shows the same temporal pattern, while Rolling,
 Weighted, and the half-life diagnostic stay near the target on average.
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.90\textwidth]{figures/final_confirmatory/coverage_by_time.pdf}
 \caption{Observed-label coverage over the test timestamps. Lines
 are method means over the five-seed, four-rate confirmatory run; the dashed line
 marks the 0.90 target.}
 \label{fig:coverage-time}
-\end{figure*}
+\end{figure}
 
 \subsection{Reliability--Utility Trade-off}
 
@@ -725,7 +704,7 @@ reaches 7,128. Fixed Weighted and Selected half-life remain close to Rolling, so
 evidence supports recent-history recalibration rather than a distinct
 half-life-selection advantage.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Archived calibration results on ICEWS14 with a continuous-time
 DistMult scorer. Values are means over five seeds. Micro coverage and mean
@@ -747,9 +726,9 @@ Deletion & Method & Micro cov. & Macro-time cov. & Undercoverage & Mean size & N
 30\% & Selected half-life & 0.8989 & 0.8987 & 0.0089 & 3,787.3 & 0.531\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Query-level multi-answer diagnostics. Full-set coverage is the
 fraction of unique queries for which every recorded answer is included; partial
@@ -775,7 +754,7 @@ Deletion & Method & Full-set cov. & Partial recall & Multi full-set & Multi part
 30\% & Selected half-life & 0.9011 & 0.9166 & 0.6489 & 0.8020 & 0.3626\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 The query-level audit checks that label-marginal coverage is not hiding
 multi-answer failures. Each seed contains 33,964 unique subject/object queries
@@ -800,7 +779,7 @@ of unique queries and reduces unconditional full-set recall from 0.9020 to
 simple set-size abstention exposes the utility problem but does not provide a
 free replacement for coverage-preserving set-size reduction.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Set-size operating points for Rolling at 30\% deletion. A cap is the
 maximum accepted prediction-set size; larger sets are abstained. Candidate load
@@ -808,11 +787,11 @@ is the mean number of returned candidates per original unique query, counting
 abstentions as zero. Uncond. recall is full-set covered answered queries divided
 by all unique queries.}
 \label{tab:set-size-utility}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
 \begin{tabular}{lrrrrrr}
 \toprule
-Cap & Answer rate & Cond. full-set cov. & Uncond. recall & Candidate load & Load reduction & Mean answered size\\
+Cap & Answer & Cond. cov. & Uncond. rec. & Load & Load red. & Mean size\\
 \midrule
 1,000 & 0.3724 & 0.7567 & 0.2819 & 67.3 & 0.9834 & 180.6\\
 3,000 & 0.4311 & 0.7772 & 0.3351 & 165.9 & 0.9592 & 384.3\\
@@ -820,7 +799,7 @@ Cap & Answer rate & Cond. full-set cov. & Uncond. recall & Candidate load & Load
 No cap & 1.0000 & 0.9020 & 0.9020 & 4,069.4 & 0.0000 & 4,069.4\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 \subsection{Shortlist Calibration}
 
@@ -849,25 +828,25 @@ margin-beating size reduction at target 0.92. We therefore interpret it as a
 useful average-size operating point, not as a universally better shortlist
 calibrator.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Shortlist calibration diagnostics at 30\% deletion. Set sizes are
 computed over unique queries, so the margin-rolling mean differs from the
 label-weighted mean size in Table~\ref{tab:calibration}.}
 \label{tab:shortlist}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
 \begin{tabular}{lrrrrrrr}
 \toprule
-Method & Label cov. & Full-set cov. & Partial recall & Mean size & Median size & P90 size & Full-vocab.\\
+Method & Label cov. & Full-set & Partial rec. & Mean & Median & P90 & Full-vocab.\\
 \midrule
 Margin rolling & 0.8998 & 0.9020 & 0.9174 & 4,069.4 & 5,746.2 & 7,128.0 & 0.3647\\
 Rank rolling & 0.8992 & 0.8881 & 0.8926 & 3,668.2 & 3,668.2 & 3,668.2 & 0.0000\\
 APS rolling & 0.8979 & 0.9045 & 0.9167 & 4,911.8 & 6,906.1 & 7,126.9 & 0.0000\\
-Validation-selected RAPS rolling & 0.8987 & 0.8874 & 0.8934 & 3,319.0 & 2,924.6 & 4,646.5 & 0.0000\\
+Val.-selected RAPS rolling & 0.8987 & 0.8874 & 0.8934 & 3,319.0 & 2,924.6 & 4,646.5 & 0.0000\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 \subsection{Relation-Side Worst-Group Diagnostics}
 
@@ -883,7 +862,7 @@ therefore supports improved relation-side diagnostics, but not a conditional
 coverage guarantee: the weakest Rolling group at 30\% deletion still covers
 only 0.7625 of observed labels.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Relation-side worst-group diagnostics. Groups are original relation
 ID by prediction side, with inverse subject relations mapped back to the base
@@ -906,7 +885,7 @@ Deletion & Method & Min cov. & P10 cov. & Median cov. & Below 0.90 & Mean underc
 30\% & Selected half-life & 0.7619 & 0.8705 & 0.9479 & 0.237 & 0.0095 & 0.7933\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 \begin{figure}[t]
 \centering
@@ -946,7 +925,7 @@ undercoverage reduction is 0.0772 without deletion and 0.0723 at 30\%
 deletion. Controlled deletion is therefore a scorer-degradation and utility
 stress test, not the source of the rolling advantage.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Calibration-pool span and half-life identifiability. Count windows are
 measured in scores, not timestamp blocks. \(N_{\mathrm{eff}}(7)\) is the Kish
@@ -966,9 +945,9 @@ Count-2000 & 2,000 & 4 & [3, 6] & 4 & 1,979.2 & 2,000.0 & \(\infty\) in 12/20; 7
 All history & 32,034 & 58 & [22, 94] & 58 & 10,902.1 & 32,034.0 & Diagnostic only\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Window and history ablation at 30\% deletion. Values are means over
 five seeds. Below-target time is the fraction of test timestamp batches whose
@@ -993,7 +972,7 @@ Time-window-14 & 0.8874 & 0.0160 & 0.7370 & 3,615.3 & 3,578.6\\
 Time-window-30 & 0.8766 & 0.0254 & 0.8767 & 3,438.3 & 2,522.8\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 \subsection{Delayed-Feedback Sensitivity}
 
@@ -1217,46 +1196,25 @@ candidate-set cost. Future work should test stronger TKG backbones, additional
 temporal graphs, longer calibration histories, other missing-history mechanisms,
 and shortlist methods that reduce size while preserving query-level coverage.
 
-\section*{Author Contributions}
+\vspace{6pt}
 
-Conceptualization, X.W.; methodology, X.W.; software, X.W.; validation, X.W.;
-formal analysis, X.W.; investigation, X.W.; resources, X.W.; data curation,
-X.W.; writing--original draft preparation, X.W.; writing--review and editing,
-X.W.; visualization, X.W.; supervision, X.W.; project administration, X.W.;
-funding acquisition, X.W. The author has read and agreed to the published
-version of the manuscript.
+\authorcontributions{Conceptualization, X.W.; methodology, X.W.; software, X.W.; validation, X.W.; formal analysis, X.W.; investigation, X.W.; resources, X.W.; data curation, X.W.; writing--original draft preparation, X.W.; writing--review and editing, X.W.; visualization, X.W.; supervision, X.W.; project administration, X.W.; funding acquisition, X.W. The author has read and agreed to the published version of the manuscript.}
 
-\section*{Funding}
-
-This work was supported by the Natural Science Research Project of Universities
-in Anhui Province (Grant No. 2023AH052916).
+\funding{This research was funded by the Natural Science Research Project of Universities in Anhui Province, grant number 2023AH052916.}
 
 \section*{Institutional Review Board Statement}
-
 Not applicable.
 
 \section*{Informed Consent Statement}
-
 Not applicable.
 
 \section*{Data Availability Statement}
+The experiments use the public ICEWS14 benchmark. Source code, experiment configurations, fixed random seeds, paper-facing derived result tables, and figure-generation artifacts are available at \url{https://github.com/xywang815/riskcal-tkg-w}. Raw benchmark files should be obtained from the original public source according to its distribution terms. The repository provides preprocessing and normalization scripts used in this study.
 
-The experiments use the public ICEWS14 benchmark. Source code, experiment
-configurations, fixed random seeds, paper-facing derived result tables, and
-figure-generation artifacts are available at
-\url{https://github.com/xywang815/riskcal-tkg-w}. Raw benchmark files should be
-obtained from the original public source according to its distribution terms.
-The repository provides preprocessing and normalization scripts used in this
-study.
+\conflictsofinterest{The author declares no conflicts of interest. The funder had no role in the design of the study; in the collection, analyses, or interpretation of data; in the writing of the manuscript; or in the decision to publish the results.}
 
-\section*{Conflicts of Interest}
-
-The author declares no conflicts of interest. The funder had no role in the
-design of the study; in the collection, analyses, or interpretation of data; in
-the writing of the manuscript; or in the decision to publish the results.
-
+\appendixtitles{yes}
 \appendix
-
 \section{Additional Diagnostics}
 \label{app:protocol}
 
@@ -1305,7 +1263,8 @@ Block & Undercoverage & Micro cov. gain & MRR gain\\
 \end{table}
 
 \FloatBarrier
-\bibliographystyle{unsrt}
+\reftitle{References}
+\externalbibliography{yes}
 \bibliography{references}
 
 \end{document}

@@ -49,4 +49,4 @@ The code in this repository is released under the MIT License. See `LICENSE`.
 
 ## Citation
 
-The GitHub repository is available at https://github.com/xywang815/riskcal-tkg-w. A Zenodo DOI should be added after a public archival release is created.
+The GitHub repository is available at https://github.com/xywang815/riskcal-tkg-w. If an archival release is created, cite the corresponding Zenodo DOI alongside the GitHub URL.
