@@ -107,13 +107,13 @@ before inspecting any expansion outcomes.
 
 | Axis | Starting level | Required added level | Status |
 | --- | --- | --- | --- |
-| Dataset | ICEWS14 | ICEWS05-15 from the official TKBC data bundle | Source verified; preparation pending |
-| Scorer | Temporal DistMult-style | Continuous-time ComplEx scorer under the matched training protocol | Design fixed; implementation pending |
-| Negative sampling | Uniform object corruption | Training-positive filtered | Pending |
-| Conformal baseline | Current static/rolling margin methods | Static KGCP NegScore, Minmax, and Softmax | Definitions audited; implementation pending |
-| Deletion | 0.0, 0.1, 0.2, 0.3 | Same, with interaction analysis | Pending |
-| Seeds | 17, 29, 43, 59, 71 | Same unless predeclared otherwise | Pending |
-| Multi-answer | Existing diagnostics | Cross-dataset/model stratification | Pending |
+| Dataset | ICEWS14 | ICEWS05-15 from the official TKBC data bundle | Prepared and pilot-validated |
+| Scorer | Temporal DistMult-style | Continuous-time ComplEx scorer under the matched training protocol | Implemented and pilot-validated |
+| Negative sampling | Uniform object corruption | Training-positive filtered | Implemented and unit-tested |
+| Conformal baseline | Current static/rolling margin methods | Static KGCP NegScore, Minmax, and Softmax | Implemented and unit-tested |
+| Deletion | 0.0, 0.1, 0.2, 0.3 | Same, with interaction analysis | Frozen in E1-E6; formal analysis pending |
+| Seeds | 17, 29, 43, 59, 71 | Same unless predeclared otherwise | Frozen in E1-E6; formal runs pending |
+| Multi-answer | Existing diagnostics | Cross-dataset/model stratification | Query-level multiplicity fields implemented and unit-tested; formal analysis pending |
 
 ### Frozen expansion runs
 
@@ -167,6 +167,13 @@ a checksum manifest when more than two files are produced.
 | 2026-08-31 | Ran the first focused server test gate | same uncommitted bundle above | `/root/autodl-tmp/riskcal_expansion_staging` | Pytest terminal record | 42 tests passed and 13 failed. Twelve failures traced to `TemporalDistMult.score_all_objects` being placed in the wrong class scope; one packaging-only failure traced to README omission. Formal experiments remained blocked pending a corrected bundle. |
 | 2026-08-31 | Corrected DistMult method scope locally | uncommitted child of `01a71d4` | Local source tree | `py_compile` and `git diff --check` passed | No protocol or metric definition changed; corrected bundle and full server retest pending |
 | 2026-09-01 | Re-ran focused and full server test gates on corrected source | corrected bundle SHA-256 `b96d42ad11bcd40858fd5c2119e1ea9ca7cc7fde6c0c26885d492424c4ba0d18` | `/root/autodl-tmp/riskcal_expansion_staging_v3` | Bundle checksum verified on server; pytest records in terminal | Focused gate: 55 passed. Full suite: 111 passed with one existing trusted-checkpoint `torch.load` future warning. No test failed; formal runs remain unstarted pending data and pilot validation. |
+| 2026-09-01 | Committed the server-tested expansion implementation and frozen E1-E6 configurations | commit `cec7816d619ec7876bccad777740fe41fd0ead0c` | Local source tree; server staging content is identical to the commit | Git object identity `cec7816` | Commit becomes the source identity for expansion runs; manuscript remains locked |
+| 2026-09-01 | Prepared and reloaded official ICEWS14 and ICEWS05-15 data | commit `cec7816`; source archive SHA-256 `2a993856622981535067a5ba54a5c649e7b50bf6ba0cb2197c17b2e9c069d25e` | `/root/autodl-tmp/riskcal_expansion_staging_v3/data/raw/{icews14,icews05_15}` | Per-file checksums recorded in each `SOURCE.json` | ICEWS14: 90,730 facts, 7,128 entities, 230 relations, 365 timestamps. ICEWS05-15: 461,329 facts, 10,488 entities, 251 relations, 4,017 timestamps. Strict split-boundary checks passed with no overlap. |
+| 2026-09-01 | Completed ICEWS14 continuous-time ComplEx filtered-sampling pilot | commit `cec7816`; pilot config `pilot_icews14_tcomplex_filtered.yaml` | `/root/autodl-tmp/riskcal_expansion_staging_v3/results/expansion_pilots/icews14_tcomplex_filtered/20260831T162503080495Z-3331ac95bcd1` | Condition markers verify checkpoint, deletion mask, resources, windows, and query artifacts | Completed 2 conditions in 250.93 s; 0 prequential leakage violations; 8 methods present; nondegenerate score spread; 10 epochs each. Single-seed diagnostic only: static-margin and KGCP Softmax under-covered while KGCP NegScore/Minmax were closer to 0.90. No manuscript claim made. |
+| 2026-09-01 | Completed ICEWS05-15 temporal DistMult filtered-sampling pilot | commit `cec7816`; pilot config `pilot_icews05_15_distmult_filtered.yaml` | `/root/autodl-tmp/riskcal_expansion_staging_v3/results/expansion_pilots/icews05_15_distmult_filtered/20260831T163825064706Z-ca160db592a2` | Condition markers verify checkpoint, deletion mask, resources, windows, and query artifacts | Completed 2 conditions in 1,426.42 s; 0 prequential leakage violations; 8 methods present; nondegenerate score spread; 5 epochs each. Single-seed diagnostic: rolling/adaptive mean coverage was about 0.90, whereas all static variants were below target. No manuscript claim made. |
+| 2026-09-01 | Tested GPU all-entity scoring as a possible runtime optimization | temporary uncommitted child of `cec7816` | `/root/autodl-tmp/riskcal_expansion_staging_v4/results/device_validation/icews14_tcomplex_filtered/20260831T171845638680Z-3331ac95bcd1` | Full suite 111 passed before pilot; matched per-window outputs compared with the `cec7816` CPU-scoring pilot | Coverage was identical and maximum MRR difference was `2.24e-9`, but duration increased from 250.93 s to 255.14 s and set-size boundary values differed slightly. The optimization was rejected and local code restored exactly to `cec7816`; formal runs retain CPU evaluation for reproducibility. |
+| 2026-09-01 | Added per-query answer multiplicity and a resumable E1-E6 matrix controller | uncommitted child of `cec7816`; transfer archive SHA-256 `085b147bf3caec0e582224a0dfb9f77b577101bd6347efb7587223eb9b54d453` | `/root/autodl-tmp/riskcal_expansion_staging_v5` | Transfer checksum matched on server; full suite `112 passed` with one pre-existing trusted-checkpoint warning | Each query row now records `answer_count` and `is_multi_answer`. The controller writes progress atomically and records config/run-manifest hashes; no formal E1-E6 run was started from the uncommitted archive. |
+| 2026-09-01 | Validated matrix completion detection and duplicate-run avoidance | same uncommitted staging source above; `configs/smoke.yaml` | `/root/autodl-tmp/riskcal_expansion_staging_v5/results/matrix_smoke/smoke/20260831T180018549279Z-4c824f5e96dd` | Config SHA-256 `b1c237280d85cce5fe6561a5873e4ad3212108128d689b4a9df6832c2653a0fd`; run-manifest SHA-256 `2c3df427bcaef4117f6cd593db85b9f4cd86d7ad9ae723946e2c60633894d1d8` | First invocation completed the smoke run; the second verified and skipped the same run. Query artifact contained both multiplicity columns. Formal runs remain blocked until this source is committed and redeployed from a Git bundle. |
 
 ## Decision log
 
@@ -179,6 +186,8 @@ a checksum manifest when more than two files are produced.
 | 2026-08-31 | Add a continuous-time ComplEx scorer | TComplEx provides a materially different asymmetric complex-valued scoring family; a continuous time map is required by the prequential future-timestamp protocol | The scorer will be described as a matched-protocol continuous-time ComplEx implementation, not as an exact reproduction of the official TComplEx optimizer |
 | 2026-08-31 | Filter only training positives during negative sampling | Predeclared sensitivity scope; prevents false negatives without exposing calibration/test labels | Uniform and filtered training runs share evaluation filtering and all other settings |
 | 2026-08-31 | Keep the old margin methods but stop calling them KGCP | Method-identity audit | Expansion outputs use explicit `static_margin` and `rolling_margin`; KGCP names are reserved for the published score transforms |
+| 2026-09-01 | Record answer multiplicity in the primary query artifact rather than infer it after aggregation | Reviewer concern about multi-answer degradation; the filtered truth map is available at evaluation time | Every formal method/query row can be stratified by single- versus multi-answer status without reconstructing labels from a separate data split |
+| 2026-09-01 | Launch formal E1-E6 only from a clean clone of a committed Git bundle | The uncommitted transfer archive cannot supply a Git commit in `matrix_progress.json` | Formal matrix provenance must include a non-null commit and clean worktree before launch |
 
 ## Completion checklist
 
@@ -188,7 +197,7 @@ a checksum manifest when more than two files are produced.
 - [x] Added model implemented and unit-tested; experiment documentation awaits final evidence.
 - [x] Filtered negative sampling implemented and unit-tested.
 - [x] Conformal KG baseline(s) implemented and unit-tested.
-- [ ] Pilot matrix passes leakage, metric, and runtime checks.
+- [x] Pilot matrix passes leakage, metric, and runtime checks.
 - [ ] Full expansion matrix completed with logs and checkpoints.
 - [ ] Multi-answer and deletion-interaction diagnostics verified.
 - [ ] All output manifests and checksums verified locally.

@@ -126,6 +126,14 @@ def test_window_metrics_include_singleton_and_abstention_rates(tmp_path: Path) -
     assert "abstention_rate_at_1" in windows
 
 
+def test_query_metrics_record_answer_multiplicity(tmp_path: Path) -> None:
+    run_root = run_experiment.smoke(output_parent=tmp_path)
+    queries = pd.read_parquet(run_root / "metrics" / "per_query.parquet")
+    assert {"answer_count", "is_multi_answer"}.issubset(queries.columns)
+    assert (queries["answer_count"] >= 1).all()
+    assert (queries["is_multi_answer"] == (queries["answer_count"] > 1)).all()
+
+
 def test_resume_reuses_checkpoint_for_interrupted_condition(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

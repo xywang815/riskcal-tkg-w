@@ -586,6 +586,13 @@ def _evaluate_condition(
         frequency_ranking = ranking_metrics(frequency_ranks)
         top1 = scores.argmax(axis=1)
         top1_correct = top1 == labels
+        answer_counts = np.asarray(
+            [
+                len(truth[(int(subject), int(relation), int(timestamp))])
+                for subject, relation, _, _ in facts
+            ],
+            dtype=np.int64,
+        )
 
         for method, threshold in thresholds.items():
             if method == "top1":
@@ -675,6 +682,8 @@ def _evaluate_condition(
                         "subject_id": int(fact[0]),
                         "relation_id": int(fact[1]),
                         "true_object_id": int(fact[2]),
+                        "answer_count": int(answer_counts[index]),
+                        "is_multi_answer": bool(answer_counts[index] > 1),
                         "rank": int(ranks[index]),
                         "frequency_rank": int(frequency_ranks[index]),
                         "set_size": int(sizes[index]),
