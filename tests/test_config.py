@@ -47,6 +47,26 @@ def test_load_config_accepts_training_parameters(tmp_path: Path) -> None:
     assert config.min_score_std == 1e-9
 
 
+def test_load_config_accepts_expansion_parameters(tmp_path: Path) -> None:
+    path = tmp_path / "expansion.yaml"
+    path.write_text(
+        "data_mode: icews05_15\n"
+        "model_name: continuous_tcomplex\n"
+        "negative_sampling: filtered\n"
+        "include_kgcp_baselines: true\n"
+        "explicit_method_names: true\n"
+        "kgcp_temperature: 1.0\n",
+        encoding="utf-8",
+    )
+    config = load_config(path)
+    assert config.data_mode == "icews05_15"
+    assert config.model_name == "continuous_tcomplex"
+    assert config.negative_sampling == "filtered"
+    assert config.include_kgcp_baselines
+    assert config.explicit_method_names
+    assert config.kgcp_temperature == 1.0
+
+
 def test_load_config_accepts_preregistered_selection_parameters(tmp_path: Path) -> None:
     path = tmp_path / "selection.yaml"
     path.write_text(

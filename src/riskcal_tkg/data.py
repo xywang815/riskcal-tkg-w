@@ -249,7 +249,7 @@ def load_quadruple_files(paths: Iterable[Path]) -> QuadrupleTable:
         ):
             if not line.strip():
                 continue
-            fields = line.split()
+            fields = line.split("\t") if "\t" in line else line.split()
             if len(fields) != 4:
                 raise ValueError(f"{path}:{line_number}: expected four columns")
             rows.append((fields[0], fields[1], fields[2], fields[3]))
@@ -283,5 +283,24 @@ def built_in_toy_table() -> QuadrupleTable:
 def load_configured_table(config: "ExperimentConfig") -> QuadrupleTable:
     if config.data_mode == "toy":
         return built_in_toy_table()
-    paths = [config.data_path / name for name in ("train.txt", "valid.txt", "test.txt")]
-    return load_quadruple_files(paths)
+    return load_quadruple_files(configured_quadruple_paths(config))
+
+
+def configured_quadruple_paths(config: "ExperimentConfig") -> tuple[Path, ...]:
+    if config.data_mode == "toy":
+        return ()
+    txt_paths = tuple(
+        config.data_path / name for name in ("train.txt", "valid.txt", "test.txt")
+    )
+    bare_paths = tuple(
+        config.data_path / name for name in ("train", "valid", "test")
+    )
+    if all(path.is_file() for path in txt_paths):
+        return txt_paths
+    if all(path.is_file() for path in bare_paths):
+        return bare_paths
+    missing = [str(path) for path in (*txt_paths, *bare_paths) if not path.is_file()]
+    raise FileNotFoundError(
+        "expected train/valid/test files with either bare or .txt names; "
+        f"missing candidates: {missing}"
+    )

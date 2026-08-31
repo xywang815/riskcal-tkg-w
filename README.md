@@ -22,7 +22,7 @@ This is an empirical reliability and utility study. It does not claim a new dist
 
 ## Data
 
-The experiments use the public ICEWS14 temporal knowledge graph benchmark after deterministic normalization and strict temporal splitting. Raw data files are not committed to this repository. The data preparation script records hashes and produces the normalized local data directory.
+The experiments use the public ICEWS14 and ICEWS05-15 temporal knowledge graph benchmarks after deterministic normalization and strict temporal splitting. Raw data files are not committed to this repository. The data preparation scripts record source metadata and hashes in the normalized local data directories.
 
 ## Main Experimental Claim
 
@@ -42,6 +42,25 @@ python -m pytest -q
 ```
 
 The full confirmatory run requires a CUDA-capable GPU. Paper-facing diagnostic tables can be reproduced from completed run artifacts using the scripts in `scripts/`.
+
+Prepare the historical ICEWS14 input used by the original experiment:
+
+```bash
+python scripts/prepare_icews14.py --help
+```
+
+Prepare ICEWS14 or ICEWS05-15 from the checksum-pinned official TKBC archive:
+
+```bash
+python scripts/prepare_tkbc_dataset.py --help
+```
+
+Run a configured experiment and summarize a completed run:
+
+```bash
+python scripts/run_pilot.py --config configs/icews14_pilot.yaml
+python scripts/summarize_results.py --help
+```
 
 ## License
 

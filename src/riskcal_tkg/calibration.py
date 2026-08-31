@@ -13,6 +13,8 @@ DRIFT_FEATURE_NAMES = (
     "log_query_count",
 )
 
+KGCP_SCORE_METHODS = ("negscore", "minmax", "softmax")
+
 
 def _validate_scores(scores: np.ndarray) -> np.ndarray:
     array = np.asarray(scores, dtype=float)
@@ -48,6 +50,64 @@ def margin_nonconformity(scores: np.ndarray, true_ids: np.ndarray) -> np.ndarray
     if len(labels) and (labels.min() < 0 or labels.max() >= values.shape[1]):
         raise ValueError("true entity ID out of range")
     return values.max(axis=1) - values[np.arange(len(values)), labels]
+
+
+def _kgcp_candidate_nonconformity(
+    scores: np.ndarray,
+    method: str,
+    temperature: float = 1.0,
+) -> np.ndarray:
+    values = _validate_scores(scores)
+    if values.ndim != 2:
+        raise ValueError("scores must have shape (n, classes)")
+    if method not in KGCP_SCORE_METHODS:
+        raise ValueError(f"unknown KGCP score method: {method}")
+    if not math.isfinite(temperature) or temperature <= 0:
+        raise ValueError("temperature must be finite and positive")
+    if method == "negscore":
+        return -values
+    if method == "minmax":
+        minima = values.min(axis=1, keepdims=True)
+        ranges = values.max(axis=1, keepdims=True) - minima
+        normalized = np.divide(
+            values - minima,
+            ranges,
+            out=np.zeros_like(values),
+            where=ranges > 0,
+        )
+        return -normalized
+    logits = values / temperature
+    logits = logits - logits.max(axis=1, keepdims=True)
+    probabilities = np.exp(logits)
+    probabilities /= probabilities.sum(axis=1, keepdims=True)
+    return 1.0 - probabilities
+
+
+def kgcp_nonconformity(
+    scores: np.ndarray,
+    true_ids: np.ndarray,
+    method: str,
+    temperature: float = 1.0,
+) -> np.ndarray:
+    candidates = _kgcp_candidate_nonconformity(scores, method, temperature)
+    labels = np.asarray(true_ids, dtype=np.int64)
+    if labels.shape != (len(candidates),):
+        raise ValueError("scores and true_ids have incompatible shapes")
+    if len(labels) and (labels.min() < 0 or labels.max() >= candidates.shape[1]):
+        raise ValueError("true entity ID out of range")
+    return candidates[np.arange(len(candidates)), labels]
+
+
+def kgcp_prediction_set_mask(
+    scores: np.ndarray,
+    threshold: float,
+    method: str,
+    temperature: float = 1.0,
+) -> np.ndarray:
+    if not math.isfinite(threshold):
+        raise ValueError("threshold must be finite")
+    candidates = _kgcp_candidate_nonconformity(scores, method, temperature)
+    return candidates <= threshold
 
 
 def prediction_set_mask(scores: np.ndarray, threshold: float) -> np.ndarray:

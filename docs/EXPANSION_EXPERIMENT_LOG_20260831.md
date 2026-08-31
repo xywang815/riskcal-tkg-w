@@ -33,9 +33,9 @@ from memory and separates evidence generation from manuscript writing.
   coverage `0.90`.
 - Manuscript editing status: **LOCKED pending experiment completion**.
 
-The working tree contains a newer 2026-08-31 manuscript/submission snapshot that
-has not yet been committed. It is source material only; it is not the baseline
-for new empirical claims until it is frozen in Git.
+The cleaned 2026-08-31 manuscript/submission snapshot was frozen locally in Git
+as commit `01a71d4`. The push is pending because the first network attempt timed
+out; this does not change the experiment identity.
 
 ## Reviewer concerns translated into acceptance conditions
 
@@ -102,18 +102,40 @@ for new empirical claims until it is frozen in Git.
 
 ## Planned experiment matrix
 
-Choices marked `TBD after source and implementation audit` are deliberately not
-filled from memory.
+The added levels below were fixed after primary-source and implementation audit,
+before inspecting any expansion outcomes.
 
 | Axis | Starting level | Required added level | Status |
 | --- | --- | --- | --- |
-| Dataset | ICEWS14 | TBD after primary-source audit | Pending |
-| Scorer | Temporal DistMult-style | TBD different architecture | Pending |
+| Dataset | ICEWS14 | ICEWS05-15 from the official TKBC data bundle | Source verified; preparation pending |
+| Scorer | Temporal DistMult-style | Continuous-time ComplEx scorer under the matched training protocol | Design fixed; implementation pending |
 | Negative sampling | Uniform object corruption | Training-positive filtered | Pending |
-| Conformal baseline | Current static/rolling score methods | Published KGCP-compatible + comparator | Pending |
+| Conformal baseline | Current static/rolling margin methods | Static KGCP NegScore, Minmax, and Softmax | Definitions audited; implementation pending |
 | Deletion | 0.0, 0.1, 0.2, 0.3 | Same, with interaction analysis | Pending |
 | Seeds | 17, 29, 43, 59, 71 | Same unless predeclared otherwise | Pending |
 | Multi-answer | Existing diagnostics | Cross-dataset/model stratification | Pending |
+
+### Frozen expansion runs
+
+All paper-facing runs use seeds `{17, 29, 43, 59, 71}`, target coverage
+`0.90`, the same chronological 60/20/20 split, and the four-role calibration
+partition. DistMult uses dimension 256; the complex scorer uses dimension 128
+so that its two real-valued embedding halves have a comparable entity/relation
+parameter budget. Pilot dimensions/epochs are diagnostic only and will not enter
+paper tables.
+
+| Run | Dataset | Scorer | Sampling | Deletion rates | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| E1 | ICEWS14 | temporal DistMult | filtered | 0, .1, .2, .3 | Primary filtered comparison and KGCP baselines |
+| E2 | ICEWS05-15 | temporal DistMult | filtered | 0, .1, .2, .3 | Dataset generalization |
+| E3 | ICEWS14 | continuous-time ComplEx | filtered | 0, .1, .2, .3 | Scorer generalization |
+| E4 | ICEWS05-15 | continuous-time ComplEx | filtered | 0, .3 | Joint dataset/scorer boundary check |
+| E5 | ICEWS05-15 | temporal DistMult | uniform | 0, .3 | Negative-sampling sensitivity on added dataset |
+| E6 | ICEWS14 | continuous-time ComplEx | uniform | 0, .3 | Negative-sampling sensitivity on added scorer |
+
+The frozen 2026-08-15 ICEWS14 DistMult uniform run remains an additional
+historical comparison. It will not be silently merged with the new runs if code
+or output schemas prevent a valid paired analysis.
 
 ## Evidence and reporting rules
 
@@ -136,6 +158,15 @@ a checksum manifest when more than two files are produced.
 | Time (Asia/Shanghai) | Operation | Code/config identity | Server run or path | Output checksums | Outcome and anomalies |
 | --- | --- | --- | --- | --- | --- |
 | 2026-08-31 | Expansion contract created | start commit `9992a10` | N/A | Pending first baseline commit | Manuscript locked; no expansion run started |
+| 2026-08-31 | Froze cleaned 2026-08-31 manuscript and experiment baseline | commit `01a71d4` | N/A | Git object identity `01a71d4`; generated export/QA directories ignored | Local commit succeeded; push to GitHub timed out on port 443 and remains pending |
+| 2026-08-31 | Verified server runtime and preserved previous run | local commit `01a71d4`; server code is a non-Git tar copy | `/root/riskcal_tkg_mvp`; prior run `results/final_confirmatory/20260815T110014908249Z-eb736dbf6658` | Runtime inspection only | RTX 4090 24 GB, PyTorch 2.5.1+cu124, CUDA available; no competing compute job found; old run left unchanged |
+| 2026-08-31 | Downloaded and verified official TKBC data archive | official `facebookresearch/tkbc` download route | `/root/autodl-tmp/riskcal_sources/data.tar.gz` | SHA-256 `2a993856622981535067a5ba54a5c649e7b50bf6ba0cb2197c17b2e9c069d25e` | Archive extracted without error; contains ICEWS14, ICEWS05-15, YAGO15K, and Wikidata source files |
+| 2026-08-31 | Audited added-dataset statistics | unmodified official archive above | `/root/autodl-tmp/riskcal_sources/tkbc_data/src_data/ICEWS05-15` | Covered by archive checksum | ICEWS05-15 has 461,329 rows, 10,488 entities, 251 relations, 4,017 daily timestamps from 2005-01-01 to 2015-12-31; source license file points to Harvard Dataverse DOI `10.7910/DVN/28075` |
+| 2026-08-31 | Audited published KGCP definitions against current implementation | KGCP primary paper arXiv `2408.08248`; local `calibration.py` and `experiment.py` | N/A | Source and code audit only | Current `static` is max-score minus true-score margin calibration, not published KGCP. Published static NegScore, Minmax, and Softmax constructions will be added; old method will be reported as `static-margin` |
+| 2026-08-31 | Implemented the predeclared expansion code and frozen configurations for server validation | uncommitted child of `01a71d4`; bundle SHA-256 `39f2b66ddafad2209698f5eb87fc8afb783179b97d60d3fea233477b7ef1a009` | `/root/autodl-tmp/riskcal_expansion_staging` | Bundle checksum verified byte-for-byte on server | Added ICEWS05-15 preparation, continuous-time ComplEx, filtered sampling, three static KGCP score transforms, explicit baseline names, and E1-E6 configs; no formal run started |
+| 2026-08-31 | Ran the first focused server test gate | same uncommitted bundle above | `/root/autodl-tmp/riskcal_expansion_staging` | Pytest terminal record | 42 tests passed and 13 failed. Twelve failures traced to `TemporalDistMult.score_all_objects` being placed in the wrong class scope; one packaging-only failure traced to README omission. Formal experiments remained blocked pending a corrected bundle. |
+| 2026-08-31 | Corrected DistMult method scope locally | uncommitted child of `01a71d4` | Local source tree | `py_compile` and `git diff --check` passed | No protocol or metric definition changed; corrected bundle and full server retest pending |
+| 2026-09-01 | Re-ran focused and full server test gates on corrected source | corrected bundle SHA-256 `b96d42ad11bcd40858fd5c2119e1ea9ca7cc7fde6c0c26885d492424c4ba0d18` | `/root/autodl-tmp/riskcal_expansion_staging_v3` | Bundle checksum verified on server; pytest records in terminal | Focused gate: 55 passed. Full suite: 111 passed with one existing trusted-checkpoint `torch.load` future warning. No test failed; formal runs remain unstarted pending data and pilot validation. |
 
 ## Decision log
 
@@ -144,15 +175,19 @@ a checksum manifest when more than two files are produced.
 | 2026-08-31 | Complete and verify the experiment batch before manuscript revision | User instruction; avoids repeated formatting and claim drift | Manuscript remains locked until final evidence audit |
 | 2026-08-31 | Treat non-monotonic or null deletion effects as reportable findings | Reviewer concern and anti-HARKing rule | Motivation will be narrowed if the data require it |
 | 2026-08-31 | Do not persist SSH credentials | Reproducibility does not require secrets | Authentication is interactive only |
+| 2026-08-31 | Use ICEWS05-15 as the added dataset | Same official TKBC bundle as ICEWS14; 5.08x more facts and 11-year horizon; direct source and checksum available | Cross-dataset evidence will use a matched chronological protocol rather than paper-reported official random-split scores |
+| 2026-08-31 | Add a continuous-time ComplEx scorer | TComplEx provides a materially different asymmetric complex-valued scoring family; a continuous time map is required by the prequential future-timestamp protocol | The scorer will be described as a matched-protocol continuous-time ComplEx implementation, not as an exact reproduction of the official TComplEx optimizer |
+| 2026-08-31 | Filter only training positives during negative sampling | Predeclared sensitivity scope; prevents false negatives without exposing calibration/test labels | Uniform and filtered training runs share evaluation filtering and all other settings |
+| 2026-08-31 | Keep the old margin methods but stop calling them KGCP | Method-identity audit | Expansion outputs use explicit `static_margin` and `rolling_margin`; KGCP names are reserved for the published score transforms |
 
 ## Completion checklist
 
-- [ ] Current 2026-08-31 source snapshot frozen in Git without build/QA clutter.
-- [ ] Published KGCP method and code audited against the current baseline.
-- [ ] Added dataset selected from a primary source and prepared reproducibly.
-- [ ] Added model implemented, tested, and documented.
-- [ ] Filtered negative sampling implemented and unit-tested.
-- [ ] Conformal KG baseline(s) implemented and unit-tested.
+- [x] Current 2026-08-31 source snapshot frozen in Git without build/QA clutter.
+- [x] Published KGCP method and code audited against the current baseline.
+- [x] Added dataset selected from a primary source; reproducible preparation script pending.
+- [x] Added model implemented and unit-tested; experiment documentation awaits final evidence.
+- [x] Filtered negative sampling implemented and unit-tested.
+- [x] Conformal KG baseline(s) implemented and unit-tested.
 - [ ] Pilot matrix passes leakage, metric, and runtime checks.
 - [ ] Full expansion matrix completed with logs and checkpoints.
 - [ ] Multi-answer and deletion-interaction diagnostics verified.
@@ -161,4 +196,3 @@ a checksum manifest when more than two files are produced.
 - [ ] Submission PDF, figures, and statements pass final QA.
 - [ ] Clean-clone reproduction check passes.
 - [ ] Public branch updated and self-describing release/tag created.
-

@@ -1,8 +1,12 @@
 import numpy as np
 
+from riskcal_tkg.config import ExperimentConfig
+
 from riskcal_tkg.data import (
     add_inverse_relations,
     build_table,
+    configured_quadruple_paths,
+    load_configured_table,
     split_calibration_roles,
     split_model_selection,
     table_fingerprint,
@@ -86,3 +90,16 @@ def test_dataset_fingerprint_includes_semantic_id_mappings() -> None:
     renamed = build_table([("x", "related", "y", "1")])
     assert np.array_equal(first.values, renamed.values)
     assert table_fingerprint(first) != table_fingerprint(renamed)
+
+
+def test_configured_dataset_accepts_official_bare_split_names(tmp_path) -> None:
+    for name, row in zip(("train", "valid", "test"), ROWS[:3], strict=True):
+        (tmp_path / name).write_text("\t".join(row) + "\n", encoding="utf-8")
+    config = ExperimentConfig(data_mode="icews05_15", data_path=tmp_path)
+    assert [path.name for path in configured_quadruple_paths(config)] == [
+        "train",
+        "valid",
+        "test",
+    ]
+    table = load_configured_table(config)
+    assert len(table.values) == 3

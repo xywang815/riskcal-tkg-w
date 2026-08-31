@@ -9,6 +9,8 @@ from riskcal_tkg.calibration import (
     choose_adaptive_half_life,
     drift_feature_vector,
     finite_sample_quantile,
+    kgcp_nonconformity,
+    kgcp_prediction_set_mask,
     margin_nonconformity,
     prediction_set_mask,
     select_half_life,
@@ -28,6 +30,40 @@ def test_margin_and_inclusive_prediction_set() -> None:
 
 def test_finite_sample_quantile_uses_conformal_correction() -> None:
     assert finite_sample_quantile(np.asarray([0.0, 1.0, 2.0, 3.0]), alpha=0.25) == 3.0
+
+
+def test_kgcp_negscore_matches_published_definition() -> None:
+    scores = np.asarray([[4.0, 3.0, 1.0]])
+    labels = np.asarray([1])
+    nonconformity = kgcp_nonconformity(scores, labels, "negscore")
+    assert nonconformity.tolist() == [-3.0]
+    assert kgcp_prediction_set_mask(
+        scores,
+        threshold=-3.0,
+        method="negscore",
+    ).tolist() == [[True, True, False]]
+
+
+def test_kgcp_minmax_and_softmax_include_the_calibrated_label() -> None:
+    scores = np.asarray([[4.0, 3.0, 1.0], [2.0, 2.0, 2.0]])
+    labels = np.asarray([1, 2])
+    for method in ("minmax", "softmax"):
+        nonconformity = kgcp_nonconformity(scores, labels, method)
+        for index, threshold in enumerate(nonconformity):
+            mask = kgcp_prediction_set_mask(
+                scores[index : index + 1],
+                threshold=float(threshold),
+                method=method,
+            )
+            assert mask[0, labels[index]]
+    degenerate_threshold = float(
+        kgcp_nonconformity(scores[1:], labels[1:], "minmax")[0]
+    )
+    assert kgcp_prediction_set_mask(
+        scores[1:],
+        degenerate_threshold,
+        "minmax",
+    ).all()
 
 
 def test_weighted_quantile_matches_hand_calculation() -> None:

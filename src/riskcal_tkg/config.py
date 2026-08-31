@@ -14,7 +14,13 @@ class ExperimentConfig:
     data_mode: str = "toy"
     data_path: Path = Path("data/raw/icews14")
     output_root: Path = Path("results")
+    model_name: str = "temporal_distmult"
+    negative_sampling: str = "uniform"
+    include_kgcp_baselines: bool = False
+    explicit_method_names: bool = False
+    query_output_methods: tuple[str, ...] = ()
     target_coverage: float = 0.9
+    kgcp_temperature: float = 1.0
     deletion_rates: tuple[float, ...] = (0.0, 0.1, 0.2, 0.3)
     train_fraction: float = 0.6
     calibration_fraction: float = 0.2
@@ -43,10 +49,16 @@ class ExperimentConfig:
     def __post_init__(self) -> None:
         if self.device not in {"auto", "cpu", "cuda"}:
             raise ValueError("device must be auto, cpu, or cuda")
-        if self.data_mode not in {"toy", "icews14"}:
-            raise ValueError("data_mode must be toy or icews14")
+        if self.data_mode not in {"toy", "icews14", "icews05_15"}:
+            raise ValueError("data_mode must be toy, icews14, or icews05_15")
+        if self.model_name not in {"temporal_distmult", "continuous_tcomplex"}:
+            raise ValueError("unknown model_name")
+        if self.negative_sampling not in {"uniform", "filtered"}:
+            raise ValueError("negative_sampling must be uniform or filtered")
         if not 0.0 < self.target_coverage < 1.0:
             raise ValueError("target_coverage must be between 0 and 1")
+        if not math.isfinite(self.kgcp_temperature) or self.kgcp_temperature <= 0:
+            raise ValueError("kgcp_temperature must be finite and positive")
         if any(rate < 0.0 or rate >= 1.0 for rate in self.deletion_rates):
             raise ValueError("deletion_rates must be in [0, 1)")
         if self.embedding_dim <= 0:
@@ -101,6 +113,8 @@ def load_config(path: Path) -> ExperimentConfig:
         raw["seeds"] = tuple(int(value) for value in raw["seeds"])
     if "max_set_sizes" in raw:
         raw["max_set_sizes"] = tuple(int(value) for value in raw["max_set_sizes"])
+    if "query_output_methods" in raw:
+        raw["query_output_methods"] = tuple(str(value) for value in raw["query_output_methods"])
     if "half_lives" in raw:
         raw["half_lives"] = tuple(float(value) for value in raw["half_lives"])
     if "calibration_role_fractions" in raw:
@@ -109,6 +123,7 @@ def load_config(path: Path) -> ExperimentConfig:
         )
     for key in (
         "target_coverage",
+        "kgcp_temperature",
         "train_fraction",
         "calibration_fraction",
         "adaptive_selector_ridge",

@@ -43,6 +43,40 @@ class ContinuousTimeEncoder(nn.Module):
         return 1.0 + self.projection(features)
 
 
+class ContinuousComplexTimeEncoder(nn.Module):
+    """Map ordered timestamps to a smooth complex-valued modulation."""
+
+    def __init__(
+        self,
+        num_timestamps: int,
+        embedding_dim: int,
+        time_scale: int | None = None,
+    ) -> None:
+        super().__init__()
+        self.num_embeddings = num_timestamps
+        scale = max(num_timestamps - 1, 1) if time_scale is None else max(time_scale, 1)
+        self.register_buffer("scale", torch.tensor(float(scale)))
+        self.projection = nn.Linear(5, 2 * embedding_dim, bias=False)
+        bound = 1.0 / math.sqrt(embedding_dim)
+        nn.init.uniform_(self.projection.weight, -bound, bound)
+
+    def forward(self, timestamp_ids: torch.Tensor) -> torch.Tensor:
+        values = timestamp_ids.to(dtype=self.projection.weight.dtype) / self.scale
+        features = torch.stack(
+            (
+                torch.ones_like(values),
+                values,
+                values.square(),
+                torch.sin(math.pi * values),
+                torch.cos(math.pi * values),
+            ),
+            dim=-1,
+        )
+        modulation = self.projection(features)
+        real, imaginary = modulation.chunk(2, dim=-1)
+        return torch.cat((1.0 + real, imaginary), dim=-1)
+
+
 class TemporalDistMult(nn.Module):
     def __init__(
         self,
@@ -95,16 +129,14 @@ class TemporalDistMult(nn.Module):
             raise ValueError("queries must have shape (n, 3)")
         if queries.dtype != torch.long:
             raise ValueError("queries must use torch.long IDs")
+        s, r, t = queries.unbind(dim=1)
         if queries.numel():
-            s, r, t = queries.unbind(dim=1)
             if int(s.min()) < 0 or int(s.max()) >= self.entity.num_embeddings:
                 raise ValueError("entity ID out of range")
             if int(r.min()) < 0 or int(r.max()) >= self.relation.num_embeddings:
                 raise ValueError("relation ID out of range")
             if int(t.min()) < 0:
                 raise ValueError("timestamp ID out of range")
-        else:
-            s, r, t = queries.unbind(dim=1)
         query_embeddings = self.entity(s) * self.relation(r) * self.time(t)
         scores = query_embeddings @ self.entity.weight.T
         if not torch.isfinite(scores).all():
@@ -112,8 +144,151 @@ class TemporalDistMult(nn.Module):
         return scores
 
 
+class ContinuousTemporalComplEx(nn.Module):
+    """ComplEx-style temporal scorer with a continuous complex time map."""
+
+    def __init__(
+        self,
+        num_entities: int,
+        num_relations: int,
+        num_timestamps: int,
+        embedding_dim: int,
+        time_scale: int | None = None,
+    ) -> None:
+        super().__init__()
+        if min(num_entities, num_relations, num_timestamps, embedding_dim) <= 0:
+            raise ValueError("embedding table sizes and dimension must be positive")
+        self.embedding_dim = embedding_dim
+        self.entity = nn.Embedding(num_entities, 2 * embedding_dim)
+        self.relation = nn.Embedding(num_relations, 2 * embedding_dim)
+        self.time = ContinuousComplexTimeEncoder(
+            num_timestamps,
+            embedding_dim,
+            time_scale,
+        )
+        bound = 1.0 / math.sqrt(embedding_dim)
+        for embedding in (self.entity, self.relation):
+            nn.init.uniform_(embedding.weight, -bound, bound)
+
+    def _validate_quadruples(self, quadruples: torch.Tensor) -> None:
+        if quadruples.ndim != 2 or quadruples.shape[1] != 4:
+            raise ValueError("quadruples must have shape (n, 4)")
+        if quadruples.dtype != torch.long:
+            raise ValueError("quadruples must use torch.long IDs")
+        if quadruples.numel() == 0:
+            return
+        s, r, o, t = quadruples.unbind(dim=1)
+        if min(int(s.min()), int(o.min())) < 0 or max(int(s.max()), int(o.max())) >= self.entity.num_embeddings:
+            raise ValueError("entity ID out of range")
+        if int(r.min()) < 0 or int(r.max()) >= self.relation.num_embeddings:
+            raise ValueError("relation ID out of range")
+        if int(t.min()) < 0:
+            raise ValueError("timestamp ID out of range")
+
+    @staticmethod
+    def _complex_product(
+        left: torch.Tensor,
+        right: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        left_real, left_imaginary = left.chunk(2, dim=-1)
+        right_real, right_imaginary = right.chunk(2, dim=-1)
+        return (
+            left_real * right_real - left_imaginary * right_imaginary,
+            left_real * right_imaginary + left_imaginary * right_real,
+        )
+
+    def _query_embedding(
+        self,
+        subjects: torch.Tensor,
+        relations: torch.Tensor,
+        timestamps: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        relation_real, relation_imaginary = self._complex_product(
+            self.relation(relations),
+            self.time(timestamps),
+        )
+        subject_real, subject_imaginary = self.entity(subjects).chunk(2, dim=-1)
+        return (
+            subject_real * relation_real - subject_imaginary * relation_imaginary,
+            subject_real * relation_imaginary + subject_imaginary * relation_real,
+        )
+
+    def score_quadruples(self, quadruples: torch.Tensor) -> torch.Tensor:
+        self._validate_quadruples(quadruples)
+        subjects, relations, objects, timestamps = quadruples.unbind(dim=1)
+        query_real, query_imaginary = self._query_embedding(
+            subjects,
+            relations,
+            timestamps,
+        )
+        object_real, object_imaginary = self.entity(objects).chunk(2, dim=-1)
+        scores = (
+            query_real * object_real + query_imaginary * object_imaginary
+        ).sum(dim=1)
+        if not torch.isfinite(scores).all():
+            raise FloatingPointError("non-finite quadruple score")
+        return scores
+
+    def score_all_objects(self, queries: torch.Tensor) -> torch.Tensor:
+        if queries.ndim != 2 or queries.shape[1] != 3:
+            raise ValueError("queries must have shape (n, 3)")
+        if queries.dtype != torch.long:
+            raise ValueError("queries must use torch.long IDs")
+        subjects, relations, timestamps = queries.unbind(dim=1)
+        if queries.numel():
+            if int(subjects.min()) < 0 or int(subjects.max()) >= self.entity.num_embeddings:
+                raise ValueError("entity ID out of range")
+            if int(relations.min()) < 0 or int(relations.max()) >= self.relation.num_embeddings:
+                raise ValueError("relation ID out of range")
+            if int(timestamps.min()) < 0:
+                raise ValueError("timestamp ID out of range")
+        query_real, query_imaginary = self._query_embedding(
+            subjects,
+            relations,
+            timestamps,
+        )
+        entity_real, entity_imaginary = self.entity.weight.chunk(2, dim=-1)
+        scores = (
+            query_real @ entity_real.T
+            + query_imaginary @ entity_imaginary.T
+        )
+        if not torch.isfinite(scores).all():
+            raise FloatingPointError("non-finite all-object score")
+        return scores
+
+
+TemporalModel = TemporalDistMult | ContinuousTemporalComplEx
+
+
+def build_temporal_model(
+    model_name: str,
+    num_entities: int,
+    num_relations: int,
+    num_timestamps: int,
+    embedding_dim: int,
+    time_scale: int | None = None,
+) -> TemporalModel:
+    models = {
+        "temporal_distmult": TemporalDistMult,
+        "continuous_tcomplex": ContinuousTemporalComplEx,
+    }
+    try:
+        model_class = models[model_name]
+    except KeyError as error:
+        raise ValueError(f"unknown model_name: {model_name}") from error
+    return model_class(
+        num_entities,
+        num_relations,
+        num_timestamps,
+        embedding_dim,
+        time_scale,
+    )
+
+
 @dataclass(frozen=True)
 class TrainingConfig:
+    model_name: str = "temporal_distmult"
+    negative_sampling: str = "uniform"
     embedding_dim: int = 128
     epochs: int = 100
     batch_size: int = 512
@@ -126,6 +301,10 @@ class TrainingConfig:
     patience: int = 10
 
     def __post_init__(self) -> None:
+        if self.model_name not in {"temporal_distmult", "continuous_tcomplex"}:
+            raise ValueError("unknown model_name")
+        if self.negative_sampling not in {"uniform", "filtered"}:
+            raise ValueError("negative_sampling must be uniform or filtered")
         if min(
             self.embedding_dim,
             self.epochs,
@@ -143,7 +322,7 @@ class TrainingConfig:
 
 @dataclass(frozen=True)
 class TrainingResult:
-    model: TemporalDistMult
+    model: TemporalModel
     loss_history: tuple[float, ...]
     epochs_trained: int
     best_epoch: int
@@ -170,7 +349,7 @@ def _resolve_device(device: str) -> torch.device:
 
 
 def _validation_mrr(
-    model: TemporalDistMult,
+    model: TemporalModel,
     facts: np.ndarray,
     batch_size: int,
     device: torch.device,
@@ -200,6 +379,72 @@ def _validation_mrr(
     return float(np.mean(1.0 / np.asarray(ranks, dtype=float)))
 
 
+def _encoded_fact_keys(
+    facts: torch.Tensor,
+    num_entities: int,
+    num_relations: int,
+    num_timestamps: int,
+) -> torch.Tensor:
+    subjects, relations, objects, timestamps = facts.unbind(dim=1)
+    query_keys = (subjects * num_relations + relations) * num_timestamps + timestamps
+    return query_keys * num_entities + objects
+
+
+def _sample_negative_objects(
+    positive: torch.Tensor,
+    *,
+    num_entities: int,
+    num_relations: int,
+    num_timestamps: int,
+    negatives: int,
+    generator: torch.Generator,
+    negative_sampling: str,
+    known_positive_keys: torch.Tensor | None = None,
+) -> torch.Tensor:
+    if negative_sampling not in {"uniform", "filtered"}:
+        raise ValueError("negative_sampling must be uniform or filtered")
+    if positive.device.type != "cpu":
+        raise ValueError("negative sampling expects CPU facts")
+    repeated = positive.repeat_interleave(negatives, dim=0)
+    true_objects = repeated[:, 2]
+    sampled = torch.randint(
+        num_entities,
+        (len(repeated),),
+        generator=generator,
+        dtype=torch.long,
+    )
+    for _ in range(100):
+        if negative_sampling == "uniform":
+            rejected = sampled == true_objects if num_entities > 1 else torch.zeros_like(sampled, dtype=torch.bool)
+        else:
+            if known_positive_keys is None or len(known_positive_keys) == 0:
+                raise ValueError("filtered sampling requires known positive keys")
+            candidates = repeated.clone()
+            candidates[:, 2] = sampled
+            keys = _encoded_fact_keys(
+                candidates,
+                num_entities,
+                num_relations,
+                num_timestamps,
+            )
+            positions = torch.searchsorted(known_positive_keys, keys)
+            valid_positions = positions < len(known_positive_keys)
+            rejected = torch.zeros_like(valid_positions)
+            rejected[valid_positions] = (
+                known_positive_keys[positions[valid_positions]]
+                == keys[valid_positions]
+            )
+        if not bool(rejected.any()):
+            return sampled
+        sampled[rejected] = torch.randint(
+            num_entities,
+            (int(rejected.sum()),),
+            generator=generator,
+            dtype=torch.long,
+        )
+    raise RuntimeError("could not draw a valid negative after 100 attempts")
+
+
 def train_model(
     facts: np.ndarray,
     num_entities: int,
@@ -213,7 +458,8 @@ def train_model(
         raise ValueError("facts must be a nonempty array with shape (n, 4)")
     seed_everything(config.seed)
     target_device = _resolve_device(device)
-    model = TemporalDistMult(
+    model = build_temporal_model(
+        config.model_name,
         num_entities,
         num_relations,
         num_timestamps,
@@ -226,6 +472,17 @@ def train_model(
         weight_decay=config.weight_decay,
     )
     fact_tensor = torch.as_tensor(facts, dtype=torch.long)
+    known_positive_keys = None
+    if config.negative_sampling == "filtered":
+        known_positive_keys = torch.unique(
+            _encoded_fact_keys(
+                fact_tensor,
+                num_entities,
+                num_relations,
+                num_timestamps,
+            ),
+            sorted=True,
+        )
     generator = torch.Generator(device="cpu").manual_seed(config.seed)
     loss_history: list[float] = []
     epoch_seconds: list[float] = []
@@ -241,24 +498,18 @@ def train_model(
         observed = 0
         for start in range(0, len(fact_tensor), config.batch_size):
             indices = permutation[start : start + config.batch_size]
-            positive = fact_tensor[indices].to(target_device)
-            true_objects = fact_tensor[indices, 2].repeat_interleave(config.negatives)
-            sampled_objects = torch.randint(
-                num_entities,
-                (len(true_objects),),
+            positive_cpu = fact_tensor[indices]
+            sampled_objects = _sample_negative_objects(
+                positive_cpu,
+                num_entities=num_entities,
+                num_relations=num_relations,
+                num_timestamps=num_timestamps,
+                negatives=config.negatives,
                 generator=generator,
-                dtype=torch.long,
+                negative_sampling=config.negative_sampling,
+                known_positive_keys=known_positive_keys,
             )
-            if num_entities > 1:
-                same_as_positive = sampled_objects == true_objects
-                while bool(same_as_positive.any()):
-                    sampled_objects[same_as_positive] = torch.randint(
-                        num_entities,
-                        (int(same_as_positive.sum()),),
-                        generator=generator,
-                        dtype=torch.long,
-                    )
-                    same_as_positive = sampled_objects == true_objects
+            positive = positive_cpu.to(target_device)
             negative = positive.repeat_interleave(config.negatives, dim=0)
             negative[:, 2] = sampled_objects.to(target_device)
 

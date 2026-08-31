@@ -16,7 +16,9 @@ import pandas as pd
 METHOD_COLORS = {
     "top1": "#59a14f",
     "static": "#9c755f",
+    "static_margin": "#9c755f",
     "rolling": "#4e79a7",
+    "rolling_margin": "#4e79a7",
     "weighted": "#e15759",
     "adaptive": "#b07aa1",
 }
@@ -57,7 +59,10 @@ def _condition_table(rows: pd.DataFrame) -> pd.DataFrame:
     missing = sorted(required - set(rows.columns))
     if missing:
         raise ValueError(f"missing metric columns: {missing}")
-    methods = {"static", "rolling", "weighted"}
+    observed_methods = set(rows["method"])
+    static_method = "static_margin" if "static_margin" in observed_methods else "static"
+    rolling_method = "rolling_margin" if "rolling_margin" in observed_methods else "rolling"
+    methods = {static_method, rolling_method, "weighted"}
     absent_methods = sorted(methods - set(rows["method"]))
     if absent_methods:
         raise ValueError(f"missing methods: {absent_methods}")
@@ -99,6 +104,7 @@ def _hierarchical_frequency_bootstrap(
     query_rows: pd.DataFrame | None,
     strongest_rate: float,
     expected_seeds: set[int],
+    static_method: str = "static",
     iterations: int = 10_000,
 ) -> dict[str, Any]:
     result: dict[str, Any] = {
@@ -117,7 +123,7 @@ def _hierarchical_frequency_bootstrap(
         raise ValueError(f"missing per-query columns: {missing}")
     paired = query_rows[
         (query_rows["deletion_rate"] == strongest_rate)
-        & (query_rows["method"] == "static")
+        & (query_rows["method"] == static_method)
     ].copy()
     seeds = sorted(int(value) for value in paired["seed"].unique())
     result["seed_count"] = len(seeds)
@@ -173,6 +179,9 @@ def evaluate_success_gate(
     query_rows: pd.DataFrame | None = None,
 ) -> dict[str, Any]:
     conditions = _condition_table(rows)
+    observed_methods = set(conditions["method"])
+    static_method = "static_margin" if "static_margin" in observed_methods else "static"
+    rolling_method = "rolling_margin" if "rolling_margin" in observed_methods else "rolling"
     coverage = conditions.pivot(
         index=["seed", "deletion_rate"], columns="method", values="coverage"
     )
@@ -201,17 +210,18 @@ def evaluate_success_gate(
     )
     strongest_coverage = coverage.xs(strongest_rate, level="deletion_rate")
     strongest_improvement = (
-        strongest_coverage[riskcal_method] - strongest_coverage["static"]
+        strongest_coverage[riskcal_method] - strongest_coverage[static_method]
     )
     mean_strongest_improvement = float(strongest_improvement.mean())
     gap_condition_met = bool(mean_strongest_improvement >= 0.03)
     direction_consistent = bool((strongest_improvement > 0).all())
-    size_ratio = sizes[riskcal_method] / sizes["rolling"].replace(0, np.nan)
+    size_ratio = sizes[riskcal_method] / sizes[rolling_method].replace(0, np.nan)
     set_size_ratio_ok = bool((size_ratio <= 1.5).all() and size_ratio.notna().all())
     frequency_test = _hierarchical_frequency_bootstrap(
         query_rows,
         strongest_rate,
         {int(value) for value in conditions["seed"].unique()},
+        static_method,
     )
     mean_scorer_improvement = frequency_test["mean_difference"]
     scorer_better_than_frequency = bool(

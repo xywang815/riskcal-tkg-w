@@ -35,6 +35,8 @@ from .calibration import (
     evaluate_adaptive_half_life_selector,
     finite_sample_quantile,
     fit_adaptive_half_life_selector,
+    kgcp_nonconformity,
+    kgcp_prediction_set_mask,
     margin_nonconformity,
     prediction_set_mask,
     rolling_threshold,
@@ -48,6 +50,7 @@ from .data import (
     QuadrupleTable,
     add_inverse_relations,
     built_in_toy_table,
+    configured_quadruple_paths,
     load_configured_table,
     split_calibration_roles,
     split_model_selection,
@@ -55,7 +58,13 @@ from .data import (
     temporal_split,
 )
 from .metrics import coverage_and_size, filtered_rank, ranking_metrics, selective_metrics
-from .model import TrainingConfig, TrainingResult, TemporalDistMult, train_model
+from .model import (
+    TemporalModel,
+    TrainingConfig,
+    TrainingResult,
+    build_temporal_model,
+    train_model,
+)
 
 
 def _jsonable(value: Any) -> Any:
@@ -71,7 +80,7 @@ def _jsonable(value: Any) -> Any:
 
 
 def _score_all_objects(
-    model: TemporalDistMult,
+    model: TemporalModel,
     values: np.ndarray,
     batch_size: int,
 ) -> np.ndarray:
@@ -90,7 +99,7 @@ def _score_all_objects(
 
 
 def _score_spread_summary(
-    model: TemporalDistMult,
+    model: TemporalModel,
     values: np.ndarray,
     batch_size: int,
     max_queries: int = 256,
@@ -107,7 +116,7 @@ def _score_spread_summary(
 
 
 def _score_calibration_batches(
-    model: TemporalDistMult,
+    model: TemporalModel,
     table: QuadrupleTable,
     relation_count: int,
     batch_size: int,
@@ -177,8 +186,14 @@ def _dataset_manifest(
         ]
 
     source_files: dict[str, dict[str, Any]] = {}
-    if config.data_mode == "icews14":
-        for name in ("train.txt", "valid.txt", "test.txt"):
+    if config.data_mode != "toy":
+        for path in configured_quadruple_paths(config):
+            if path.is_file():
+                source_files[path.name] = {
+                    "bytes": path.stat().st_size,
+                    "sha256": sha256_file(path),
+                }
+        for name in ("SOURCE.json", "LICENSE"):
             path = config.data_path / name
             if path.is_file():
                 source_files[name] = {
@@ -271,6 +286,8 @@ def _evaluate_condition(
     else:
         atomic_write_json(deletion_path, deletion_record)
     training_config = TrainingConfig(
+        model_name=config.model_name,
+        negative_sampling=config.negative_sampling,
         embedding_dim=config.embedding_dim,
         epochs=config.epochs,
         batch_size=config.batch_size,
@@ -291,7 +308,8 @@ def _evaluate_condition(
             dataset_sha256=dataset_sha256,
             deletion_mask_sha256=deletion.mask_sha256,
         )
-        model = TemporalDistMult(
+        model = build_temporal_model(
+            config.model_name,
             len(table.entity_to_id),
             2 * relation_count,
             len(table.timestamp_to_id),
@@ -410,12 +428,34 @@ def _evaluate_condition(
         np.concatenate(initial_margins),
         alpha=1.0 - config.target_coverage,
     )
+    initial_scores = np.concatenate(
+        [batch.scores for batch in calibration_batches],
+        axis=0,
+    )
+    initial_labels = np.concatenate(
+        [batch.true_ids for batch in calibration_batches],
+        axis=0,
+    )
+    kgcp_thresholds = {
+        method: finite_sample_quantile(
+            kgcp_nonconformity(
+                initial_scores,
+                initial_labels,
+                method,
+                config.kgcp_temperature,
+            ),
+            alpha=1.0 - config.target_coverage,
+        )
+        for method in ("negscore", "minmax", "softmax")
+    }
     if checkpoint_payload is None:
         atomic_save_checkpoint(
             checkpoint_path,
             {
                 "state_dict": trained.model.state_dict(),
                 "training_config": asdict(training_config),
+                "model_name": config.model_name,
+                "negative_sampling": config.negative_sampling,
                 "time_scale": float(trained.model.time.scale.item()),
                 "loss_history": trained.loss_history,
                 "epochs_trained": trained.epochs_trained,
@@ -445,6 +485,18 @@ def _evaluate_condition(
     ).astype(float)
     window_rows: list[dict[str, Any]] = []
     query_rows: list[dict[str, Any]] = []
+    static_name = "static_margin" if config.explicit_method_names else "static"
+    rolling_name = "rolling_margin" if config.explicit_method_names else "rolling"
+    method_definitions = {
+        "top1": "single highest-scoring entity",
+        static_name: "static split-conformal max-score margin",
+        rolling_name: "rolling prequential max-score margin",
+        "weighted": "exponentially weighted prequential max-score margin",
+        "adaptive": "validation-selected weighted prequential max-score margin",
+        "kgcp_negscore_static": "published KGCP NegScore with static split calibration",
+        "kgcp_minmax_static": "published KGCP Minmax with static split calibration",
+        "kgcp_softmax_static": "published KGCP Softmax with static split calibration",
+    }
     inference_started = time.perf_counter()
     for timestamp in np.unique(split.test.timestamps):
         raw_facts = split.test.values[split.test.timestamps == timestamp]
@@ -473,8 +525,8 @@ def _evaluate_condition(
         )
         thresholds = {
             "top1": 0.0,
-            "static": static,
-            "rolling": rolling_threshold(
+            static_name: static,
+            rolling_name: rolling_threshold(
                 pool, int(timestamp), alpha=1.0 - config.target_coverage
             ),
             "weighted": weighted_threshold(
@@ -492,11 +544,16 @@ def _evaluate_condition(
         }
         method_half_lives = {
             "top1": math.nan,
-            "static": math.nan,
-            "rolling": math.nan,
+            static_name: math.nan,
+            rolling_name: math.nan,
             "weighted": selected_half_life,
             "adaptive": adaptive_half_life,
         }
+        if config.include_kgcp_baselines:
+            for kgcp_method, threshold in kgcp_thresholds.items():
+                method_name = f"kgcp_{kgcp_method}_static"
+                thresholds[method_name] = threshold
+                method_half_lives[method_name] = math.nan
         ranks = np.asarray(
             [
                 filtered_rank(
@@ -534,6 +591,14 @@ def _evaluate_condition(
             if method == "top1":
                 mask = np.zeros_like(scores, dtype=bool)
                 mask[np.arange(len(scores)), top1] = True
+            elif method.startswith("kgcp_"):
+                kgcp_method = method.removeprefix("kgcp_").removesuffix("_static")
+                mask = kgcp_prediction_set_mask(
+                    scores,
+                    threshold,
+                    kgcp_method,
+                    config.kgcp_temperature,
+                )
             else:
                 mask = prediction_set_mask(scores, threshold)
             calibrated = coverage_and_size(mask, labels)
@@ -542,7 +607,11 @@ def _evaluate_condition(
                 "seed": seed,
                 "deletion_rate": deletion_rate,
                 "actual_deletion_rate": deletion.actual_rate,
+                "dataset_mode": config.data_mode,
+                "model_name": config.model_name,
+                "negative_sampling": config.negative_sampling,
                 "method": method,
+                "method_definition": method_definitions[method],
                 "timestamp": int(timestamp),
                 "calibration_max_timestamp": int(calibration.timestamps.max()),
                 "threshold": threshold,
@@ -589,12 +658,18 @@ def _evaluate_condition(
             ):
                 row[f"drift_{feature_name}"] = float(value)
             window_rows.append(row)
+            if config.query_output_methods and method not in config.query_output_methods:
+                continue
             for index, fact in enumerate(facts):
                 query_rows.append(
                     {
                         "seed": seed,
                         "deletion_rate": deletion_rate,
+                        "dataset_mode": config.data_mode,
+                        "model_name": config.model_name,
+                        "negative_sampling": config.negative_sampling,
                         "method": method,
+                        "method_definition": method_definitions[method],
                         "prediction_side": str(prediction_sides[index]),
                         "timestamp": int(timestamp),
                         "subject_id": int(fact[0]),
@@ -618,6 +693,10 @@ def _evaluate_condition(
         {
             "seed": seed,
             "deletion_rate": deletion_rate,
+            "dataset_mode": config.data_mode,
+            "model_name": config.model_name,
+            "negative_sampling": config.negative_sampling,
+            "kgcp_temperature": config.kgcp_temperature,
             "calibration_protocol": calibration_protocol,
             "selected_half_life": selected_half_life,
             "half_life_evaluations": half_life_evaluations,
