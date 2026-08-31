@@ -19,7 +19,9 @@ results/
 paper/build/
 paper/output/
 paper/tmp/
+output/
 submission/information/mdpi_template/
+submission/information/MDPI_Information_*/
 *.aux
 *.bbl
 *.blg

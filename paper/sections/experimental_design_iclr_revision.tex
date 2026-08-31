@@ -1,0 +1,55 @@
+\section{Experimental Design}
+\label{sec:experiments}
+
+\subsection{Data and Temporal Roles}
+
+We use ICEWS14 as a controlled event-forecasting case study. After deterministic
+normalization, it contains 7,128 entities, 230 relations, 90,730 facts, and 365
+daily timestamps. The first 219 timestamps train the scorer, timestamps
+220--292 supply disjoint validation and calibration roles, and timestamps
+293--365 form the prequential test stream. The corresponding fact counts are
+52,993, 18,439, and 19,298. The entity vocabulary is closed and fixed before
+testing. Training facts are deleted at rates
+\(\rho\in\{0,0.1,0.2,0.3\}\) with the entity-coverage constraint defined in
+Section~\ref{sec:method}; development, calibration, and test facts are unchanged.
+
+\subsection{Scorer, Comparisons, and Metrics}
+
+The frozen scorer is continuous-time DistMult. Frequency and history-based
+Repeat provide ranking references. The calibration comparison uses the same
+all-entity score tensors for Static, Rolling-1000, Fixed Weighted-1000, and the
+exploratory half-life selector. Rank, APS, and validation-selected RAPS rolling
+rules are evaluated separately as shortlist operating points.
+
+Filtered MRR and Hits@1/3/10 measure ranking. Reliability is evaluated with
+observed-label coverage, positive undercoverage
+\((0.90-\widehat{\cov})_+\), full-set query coverage, and partial answer recall.
+Utility is measured by mean, median, and P90 set size and by the fraction of
+sets equal to the 7,128-entity vocabulary. A relation-side audit retains groups
+with at least 250 observed labels across all seeds and representation in every
+seed. This support filter defines a diagnostic subset; it does not provide a
+conditional-coverage guarantee.
+
+\subsection{Confirmatory Protocol and Inference}
+
+The primary setting is 30\% training-history deletion and target coverage 0.90.
+Its estimand is
+\[
+\begin{aligned}
+  \Delta_{\mathrm{roll}}
+  &=\frac{1}{|\mathcal{S}|\,|\mathcal{T}|}
+    \sum_{s\in\mathcal{S}}\sum_{t\in\mathcal{T}} d_{s,t},\\
+  d_{s,t}
+  &=(0.90-\widehat{\cov}^{\,s,t}_{\mathrm{Static}})_+
+   -(0.90-\widehat{\cov}^{\,s,t}_{\mathrm{Rolling}})_+ .
+\end{aligned}
+\]
+It measures the reduction in timestamp-macro positive undercoverage from
+Static to Rolling-1000. The scorer uses five seeds
+\(\{17,29,43,59,71\}\). We report a paired seed-resampled circular
+moving-block bootstrap with 20,000 replicates and a seven-timestamp block
+length; each replicate uses the same timestamp blocks for both methods. Block
+lengths 3, 14, and 21 provide a sensitivity check. The code, resolved
+configurations, preprocessing steps, and derived paper tables are available at
+\url{https://github.com/xywang815/riskcal-tkg-w}.
+

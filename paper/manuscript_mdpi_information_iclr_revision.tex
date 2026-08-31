@@ -1,5 +1,5 @@
 % LaTeX support: latex@mdpi.com
-% MDPI Information submission draft generated from the project manuscript.
+% MDPI Information submission draft based on the 27 July 2026 class release.
 \documentclass[information,article,submit,oneauthor,pdftex]{Definitions/mdpi}
 
 \firstpage{1}
@@ -11,18 +11,22 @@
 \articlenumber{0}
 \pubyear{2026}
 \copyrightyear{2026}
-\history{Received: date; Accepted: date; Published: date}
+\datereceived{}
+\daterevised{}
+\dateaccepted{}
+\datepublished{}
 
 \usepackage{amsmath,amssymb}
 \usepackage{array}
 \usepackage{placeins}
+\setlength{\headheight}{20pt}
 
 \newcommand{\cov}{\operatorname{Cov}}
 \newcommand{\TV}{\operatorname{TV}}
 \newcommand{\KS}{\operatorname{KS}}
 \newcommand{\Rec}{\operatorname{Recurrence}}
 
-\Title{Prequential Answer-Set Calibration for Temporal Knowledge Graph Forecasting: An ICEWS14 Diagnostic Study}
+\Title{Prequential Answer-Set Calibration for Temporal Knowledge Graph Forecasting}
 
 \Author{Xinyu Wang $^{1,*}$}
 \AuthorNames{Xinyu Wang}
@@ -30,7 +34,7 @@
 $^{1}$ \quad Anhui Institute of Information Technology, Wuhu 241000, China}
 \corres{Correspondence: xywang68@iflytek.com}
 
-\abstract{Temporal knowledge graph (TKG) forecasting is usually evaluated by ranking accuracy, but downstream systems may need candidate answer sets whose empirical coverage remains reliable as the stream evolves. We evaluate a leakage-controlled prequential calibration protocol on ICEWS14. A continuous-time DistMult scorer is frozen after training; at each test timestamp, all subject and object queries are predicted before labels are revealed, and calibration pools are updated only after the complete timestamp batch. Across five seeds and controlled training-history deletion up to 30\%, static empirical calibration under-covers the later stream: at 30\% deletion, observed-label coverage is 0.8235 against a 0.90 target. Equal-weight rolling calibration reaches 0.8998, with paired timestamp-block undercoverage reduction 0.0723 (95\% CI [0.0535, 0.0938]). This reliability repair is costly: rolling calibration returns 3,802.5 entities on average from a 7,128-entity vocabulary, and 36.5\% of unique-query sets equal the full vocabulary. Rank-threshold rolling reduces mean size to 3,668.2 with observed-label coverage 0.8992, but full-set query coverage decreases to 0.8881. Validation-selected RAPS rolling, chosen on calibration-only validation batches from a fixed APS/RAPS grid, selects k=50 and lambda=0.0001 with tolerance 0.02 and reaches coverage 0.8987 with mean size 3,319.0, but it does not dominate rank thresholding in the tail or at target 0.92. Relation-side, delayed-feedback, window, and set-size diagnostics support a bounded conclusion: rolling prequential calibration improves observed-label reliability while exposing a substantial reliability--utility trade-off.}
+\abstract{Temporal knowledge graphs support event forecasting from evolving relational evidence, but standard ranking metrics do not show whether a model can return compact answer sets with reliable coverage. Existing calibration studies largely assume static or exchangeable data. Can a threshold updated only from past timestamp batches repair reliability under temporal drift without making sets impractically large? We study this question on ICEWS14 with a leakage-controlled prequential protocol. A continuous-time DistMult scorer is frozen after training, and every test-timestamp batch is predicted before its labels are revealed. Across five seeds and deletion of up to 30\% of training facts, static calibration covers 0.8235 of observed labels at a 0.90 target. Rolling calibration reaches 0.8998; its paired timestamp-block undercoverage reduction is 0.0723 (95\% CI [0.0535, 0.0938]). This repair is costly: mean set size is 3,802.5 of 7,128 entities, and 36.5\% of unique-query sets contain the full vocabulary. Validation-selected RAPS, chosen from a fixed calibration-only grid, reaches 0.8987 coverage with mean size 3,319.0, but reduces full-set query coverage to 0.8874. Thus recent-history calibration repairs observed-label reliability while exposing substantial utility and subgroup-coverage limits.}
 
 \keyword{temporal knowledge graph; link forecasting; uncertainty quantification; prequential evaluation; calibration; conformal prediction; distribution shift; selective prediction}
 
@@ -205,9 +209,11 @@ set. A temporal knowledge graph is a set of observed quadruples
 \[
   \mathcal{G}=\{(s,r,o,t):s,o\in\mathcal{E},\,r\in\mathcal{R},\,t\in\mathcal{T}\}.
 \]
-An object query is \(x=(s,r,?,t)\). A subject query is converted to
-\((o,r^{-1},?,t)\) using an explicit inverse relation, allowing both directions
-to share the same scoring and calibration interface.
+An object query is \(x=(s,r,?,t)\). Here ``\(?\)'' denotes the entity slot to
+be predicted; it is not missing text. A subject query is converted to
+\((o,r^{-1},?,t)\), where \(r^{-1}\) is an explicit inverse relation. This
+conversion lets both prediction directions use the same scoring and calibration
+interface.
 
 For a query \(x\), let \(Y_t(x)\subseteq\mathcal{E}\) be all entities recorded
 as valid answers at timestamp \(t\). The primary unit is an observed
@@ -369,7 +375,7 @@ Fixed Drift-Weighted calibration compares candidate half-lives once on a
 temporally ordered pre-test calibration split. The selected value \(h^\star\)
 is then fixed globally, so every test batch uses \(q_t(h^\star)\).
 
-\input{sections/theory_scope}
+\input{sections/theory_scope_iclr_revision}
 
 \subsection{Exploratory Half-Life Features}
 
@@ -417,27 +423,27 @@ Algorithm~\ref{alg:riskcal} summarizes the complete protocol.
 
 \begin{figure}[t]
 \centering
-\fbox{\begin{minipage}{0.94\columnwidth}
-\textbf{Algorithm 1: Timestamp-batched prequential calibration}
-\begin{enumerate}[leftmargin=*,nosep]
-  \item Fit the TKG scorer on training timestamps; freeze its selected
+\begin{minipage}{0.94\columnwidth}
+\hrule\vspace{5pt}
+\textbf{Algorithm 1. Timestamp-batched prequential calibration}
+\begin{enumerate}[leftmargin=5mm,itemsep=2pt,topsep=4pt]
+  \item Fit the TKG scorer on training timestamps and freeze the selected
   checkpoint.
-  \item On disjoint pre-test intervals, fit drift-feature standardization,
-  per-half-life ridge predictors, and their regularization.
-  \item Initialize \(\mathcal{P}\) using only the final calibration interval.
-  \item For each test timestamp \(t\):
-  \begin{enumerate}[leftmargin=*,nosep]
-    \item score every subject and object query without current labels;
-    \item for rolling, compute an equal-weight threshold from the recent pool;
-    \item for diagnostic variants, compute \(z_t\) and choose or fix \(h_t\);
-    \item compute \(q_t\) from strictly past scores;
-    \item emit all prediction sets and record their hashes;
-    \item reveal the complete timestamp batch and update \(\mathcal{P}\).
-  \end{enumerate}
+  \item Fit optional drift features and selector components on disjoint
+  pre-test intervals.
+  \item Initialize the calibration pool \(\mathcal{P}\) from the final
+  calibration interval.
+  \item For each test timestamp \(t\), score every subject and object query
+  without current labels, compute \(q_t\) from strictly past scores, and emit all
+  prediction sets.
+  \item Reveal the complete timestamp batch only after Step 4, append its
+  nonconformity scores to \(\mathcal{P}\), and continue to the next timestamp.
 \end{enumerate}
-\end{minipage}}
-\caption{The implemented empirical calibration procedure. All current-time
-labels are revealed only after the complete timestamp batch is predicted.}
+\vspace{2pt}\hrule
+\end{minipage}
+\caption{Leakage-controlled evaluation protocol. Optional variants change how
+the threshold is estimated from \(\mathcal{P}\); none can use labels from the
+timestamp currently being predicted.}
 \label{alg:riskcal}
 \end{figure}
 
@@ -476,6 +482,7 @@ vocabulary. In the confirmatory ICEWS14 run, peak CUDA memory remained close to
 1.05 GB and the mean per-condition wall time was 203.6 s for training, 13.0 s
 for calibration, and 45.4 s for inference.
 
+\iffalse
 \section{Experimental Design}
 \label{sec:experiments}
 
@@ -629,6 +636,10 @@ relation-side diagnostics. These files reuse frozen checkpoints from the
 confirmatory run and audit the calibration layer without retraining the
 scorer.
 
+\fi
+\input{sections/experimental_design_iclr_revision}
+
+\iffalse
 \section{Results}
 \label{sec:results}
 
@@ -1196,6 +1207,9 @@ candidate-set cost. Future work should test stronger TKG backbones, additional
 temporal graphs, longer calibration histories, other missing-history mechanisms,
 and shortlist methods that reduce size while preserving query-level coverage.
 
+\fi
+\input{sections/results_discussion_iclr_revision}
+
 \vspace{6pt}
 
 \authorcontributions{Conceptualization, X.W.; methodology, X.W.; software, X.W.; validation, X.W.; formal analysis, X.W.; investigation, X.W.; resources, X.W.; data curation, X.W.; writing--original draft preparation, X.W.; writing--review and editing, X.W.; visualization, X.W.; supervision, X.W.; project administration, X.W.; funding acquisition, X.W. The author has read and agreed to the published version of the manuscript.}
@@ -1214,6 +1228,7 @@ The experiments use the public ICEWS14 benchmark. Source code, experiment config
 \conflictsofinterest{The author declares no conflicts of interest. The funder had no role in the design of the study; in the collection, analyses, or interpretation of data; in the writing of the manuscript; or in the decision to publish the results.}
 
 \appendixtitles{yes}
+\appendixstart
 \appendix
 \section{Additional Diagnostics}
 \label{app:protocol}

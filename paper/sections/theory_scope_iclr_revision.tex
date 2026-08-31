@@ -43,7 +43,7 @@ largest individual weight.  It is the largest empirical atom mass
   \eta_t=\max_v\sum_{i:a_i=v}\bar w_i.
 \]
 
-\paragraph{Proposition 1 (set geometry and exact coverage event).}
+\noindent\textbf{Proposition 1 (set geometry and exact coverage event).}\quad
 For every query \(x\) and nonnegative thresholds \(q_1\leq q_2\),
 \[
   C_{q_1}(x)\subseteq C_{q_2}(x),
@@ -69,7 +69,7 @@ all answers in \(Y_t(x)\).  Full-set coverage and partial answer recall are
 therefore reported separately for multi-answer queries in the empirical
 diagnostics.
 
-\paragraph{Proposition 2 (deterministic coverage-deviation bound).}
+\noindent\textbf{Proposition 2 (deterministic coverage-deviation bound).}\quad
 For any finite threshold selected by the inclusive empirical rule above,
 \[
   1-\alpha-\delta_t-\epsilon_t
@@ -125,13 +125,13 @@ whenever it is used for empirical interpretation.
 As \(h\rightarrow\infty\), \(r\rightarrow1\) and the weighted rule approaches
 equal weighting within the same rolling pool.  It need not exactly equal the
 named rolling conformal baseline because that baseline uses the
-finite-sample-corrected order statistic while the MVP weighted rule uses the
+finite-sample-corrected order statistic while the implemented weighted rule uses the
 uncorrected level \(1-\alpha\).  As \(h\rightarrow0\), weight concentrates on
 the newest timestamp represented in the pool; all scores sharing that newest
 timestamp retain equal age and can retain nonzero mass.  Thus ``short
 half-life'' does not mean a single calibration observation in a batched TKG.
 
-\paragraph{Corollary (ranking invariance).}
+\noindent\textbf{Corollary (ranking invariance).}\quad
 For a fixed scorer and test queries, changing \(q_t\) changes set membership but
 not the ordering of candidates.  MRR and Hits@\(K\) are consequently identical
 for all post-hoc calibration rules applied to the same scored condition.
