@@ -36,7 +36,7 @@ terminal screenshots are not paper evidence.
 | Filtered negative sampling | E5 paired with E2; E6 paired with E3 | Same seeds, timestamps, deletion rates, model family, and evaluation labels | Report the direction and uncertainty even if filtered sampling has negligible or adverse effect | Running |
 | Multi-answer degradation | Formal `per_query.parquet` from E1-E4; answer-set reconstruction by query | `answer_count` agrees with distinct labels; single/multi full-set coverage gap is estimable | Disclose magnitude prominently and discuss why label-wise and full-set coverage differ | Running |
 | Deletion motivation | E1-E4 deletion 0 versus 0.30 paired contrasts | Timestamp-block interval excludes zero in a consistent adverse direction | Narrow the motivation to temporal calibration mismatch; explicitly report null/non-monotone deletion effects | Running |
-| Public traceability | Final commits, result checksums, clean-clone commands, release/tag | Final scripts/configs/CSV/checksums reproduce figures and are public | Manuscript cannot claim artifact availability until the public release resolves | Pending formal outputs |
+| Public traceability | Final commits, result checksums, clean-clone commands, release/tag | Final scripts/configs/CSV/checksums reproduce figures and are public | Manuscript cannot claim artifact availability until the public release resolves | Audit tooling ready; formal outputs pending |
 
 ## Formal output authority
 
@@ -56,6 +56,12 @@ complete and their manifests/checksums pass:
    intervals at block length 7 and sensitivity lengths 3, 14, and 21.
 7. `analysis_manifest.json`, `expansion_bootstrap_manifest.json`, and both
    `SHA256SUMS.txt` files: input provenance and output integrity.
+8. `expansion_figure_manifest.json` and the figure `SHA256SUMS.txt`: exact
+   bindings from verified analysis/bootstrap inputs to PDF/PNG figures.
+9. External clean-clone `RELEASE_AUDIT.json`: E1-E6 completion, frozen
+   bootstrap parameters, checksum chain, tracked publication files, clean Git
+   status, and matrix-commit ancestry. The audit is evidence only when its
+   `status` is `passed` and it was generated from the release candidate clone.
 
 ## Predeclared interpretation rules
 
