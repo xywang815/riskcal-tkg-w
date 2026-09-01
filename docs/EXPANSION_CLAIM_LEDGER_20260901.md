@@ -36,7 +36,7 @@ terminal screenshots are not paper evidence.
 | Filtered negative sampling | E5 paired with E2; E6 paired with E3 | Same seeds, timestamps, deletion rates, model family, and evaluation labels | Report the direction and uncertainty even if filtered sampling has negligible or adverse effect | E2/E5 and E3/E6 structure matches passed; effect estimation pending |
 | Multi-answer degradation | Formal `per_query.parquet` from E1-E4; answer-set reconstruction by query | `answer_count` agrees with distinct labels; single/multi full-set coverage gap is estimable | Disclose magnitude prominently and discuss why label-wise and full-set coverage differ | E1-E4 multiplicity structure passed; effect estimation pending |
 | Deletion motivation | E1-E4 deletion 0 versus 0.30 paired contrasts | Timestamp-block interval excludes zero in a consistent adverse direction | Narrow the motivation to temporal calibration mismatch; explicitly report null/non-monotone deletion effects | E1-E4 inputs complete; timestamp-block estimation pending |
-| Public traceability | Final commits, result checksums, clean-clone commands, release/tag | Final scripts/configs/CSV/checksums reproduce figures and are public | Manuscript cannot claim artifact availability until the public release resolves | Audit tooling ready; formal outputs pending |
+| Public traceability | Final commits, result checksums, clean-clone commands, release/tag | Final scripts/configs/CSV/checksums reproduce figures and are public | Manuscript cannot claim artifact availability until the public release resolves | Final server outputs checksum-verified; tracking and clean-clone release audit pending |
 
 ## Formal output authority
 
