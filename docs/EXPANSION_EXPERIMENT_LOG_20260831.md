@@ -129,9 +129,9 @@ paper tables.
 | E1 | ICEWS14 | temporal DistMult | filtered | 0, .1, .2, .3 | Completed; primary filtered comparison and KGCP baselines |
 | E2 | ICEWS05-15 | temporal DistMult | filtered | 0, .1, .2, .3 | Completed; added-dataset comparison |
 | E3 | ICEWS14 | continuous-time ComplEx | filtered | 0, .1, .2, .3 | Completed; scorer generalization |
-| E4 | ICEWS05-15 | continuous-time ComplEx | filtered | 0, .3 | Running; joint dataset/scorer boundary check |
-| E5 | ICEWS05-15 | temporal DistMult | uniform | 0, .3 | Negative-sampling sensitivity on added dataset |
-| E6 | ICEWS14 | continuous-time ComplEx | uniform | 0, .3 | Negative-sampling sensitivity on added scorer |
+| E4 | ICEWS05-15 | continuous-time ComplEx | filtered | 0, .3 | Completed; joint dataset/scorer boundary check |
+| E5 | ICEWS05-15 | temporal DistMult | uniform | 0, .3 | Running; negative-sampling sensitivity on added dataset |
+| E6 | ICEWS14 | continuous-time ComplEx | uniform | 0, .3 | Pending; negative-sampling sensitivity on added scorer |
 
 The frozen 2026-08-15 ICEWS14 DistMult uniform run remains an additional
 historical comparison. It will not be silently merged with the new runs if code
@@ -192,6 +192,8 @@ a checksum manifest when more than two files are produced.
 | 2026-09-01 | Formal matrix advanced to E2 | commit `52beca5`; frozen `icews05_15_distmult_filtered.yaml` | formal PID `11314`; `icews05_15_distmult_filtered` | Atomic progress status `running`; zero E2 condition markers at the first check | Process remained alive at about 670% CPU with low memory. The instantaneous GPU query was between training kernels; no failure or retry appeared in the log. |
 | 2026-09-01 | Completed and audited formal E2 | commit `52beca5`; config SHA-256 `73933ad43749a87fbee063ad70867ffbd6460122c745eefef51d6798a6ef199d` | `results/expansion_formal/icews05_15_distmult_filtered/20260831T224928259632Z-dffbfb732f3d` | Run-manifest SHA-256 `b7e691b9b0a265f9032a491ad08f87ed9a75664d3f56e394edad7ac010a4c86c`; external structure-audit SHA-256 `9718a544f04cfcef87374dda67c4bcde08ba617157c03907bc89460bed7acd1b`; all 20 condition markers present | E2 completed in 40,001.37 s. Audit found 128,640 window rows, 11,418,600 query rows, 20 checkpoints and resource records, 8 expected methods, model identity `temporal_distmult`, filtered sampling, answer counts from 1 to 12, 1,823,700 multi-answer label rows, set sizes from 1 to 10,488, zero inconsistent multiplicity groups, finite core metrics, and zero prequential leakage violations. No result interpretation was promoted to the manuscript. |
 | 2026-09-01 | Formal matrix advanced to E4 | commit `52beca5`; frozen `icews05_15_tcomplex_filtered.yaml` | formal PID `11314`; `icews05_15_tcomplex_filtered` | Atomic progress status `running`; cumulative matrix count 60 of 90 at transition | The controller advanced automatically after E2. Formal training continued while the completed E2 artifacts were audited at lower process priority; no formal run was interrupted or modified. |
+| 2026-09-02 | Completed and audited formal E4 | commit `52beca5`; config SHA-256 `892ffcf383011c835b6fb4ab8f308f11e99c36098260249e3ee7383ee1178f5b` | `results/expansion_formal/icews05_15_tcomplex_filtered/20260901T095614728667Z-946c4477453d` | Run-manifest SHA-256 `6be2b8327f37556090dbf27590b5819f78911d2467a912fb803616a9af996c38`; external structure-audit SHA-256 `c65af121bfb381bb4955fe49181ac13fa83aa5cb1057537a88c66d5b46a2bbda`; all 10 condition markers present | E4 completed in 26,012.55 s. Audit found 64,320 window rows, 5,709,300 query rows, 10 checkpoints and resource records, 8 expected methods, model identity `continuous_tcomplex`, filtered sampling, answer counts from 1 to 12, 911,850 multi-answer label rows, set sizes from 1 to 10,488, zero inconsistent multiplicity groups, finite core metrics, and zero prequential leakage violations. No effect interpretation was entered. |
+| 2026-09-02 | Formal matrix advanced to E5 | commit `52beca5`; frozen `icews05_15_distmult_uniform_sensitivity.yaml` | formal PID `11314`; `icews05_15_distmult_uniform_sensitivity` | Atomic progress status `running`; cumulative matrix count 70 of 90 at transition | The controller advanced automatically after E4. The E4 audit was read-only and did not modify or interrupt the formal process. |
 
 ## Decision log
 
