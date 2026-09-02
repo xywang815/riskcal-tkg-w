@@ -23,11 +23,11 @@
 
 ## Repository and Evidence Checks
 
-- [ ] `main` contains the final manuscript source, figures, source CSV files, checksums, and post-manuscript release audit.
-- [ ] Tag `v1.0.0-mdpi-information-submission` resolves to the audited final commit.
-- [ ] A clean-clone test run passes at the tagged commit.
-- [ ] The public repository landing page describes both datasets, both scorers, and the bounded reliability--utility claim.
-- [ ] No password, token, private key, raw proprietary file, local absolute path, checkpoint, or transfer archive is tracked.
+- [x] `main` contains the final manuscript source, figures, source CSV files, checksums, and post-manuscript release audit.
+- [x] Tag `v1.0.0-mdpi-information-submission` resolves to the release metadata commit immediately following audited candidate `ff5b959`.
+- [x] A fresh server-side clone of audited candidate `ff5b959` passes all 124 project tests; the tag adds only the audit report and release metadata.
+- [x] The public repository landing page describes both datasets, both scorers, and the bounded reliability--utility claim.
+- [x] No password, token, private key, raw proprietary file, local absolute path, checkpoint, or transfer archive is tracked.
 
 ## Statements to Confirm in the Submission System
 

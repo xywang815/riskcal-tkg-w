@@ -18,4 +18,4 @@ The evidence supports a prequential reliability--utility diagnostic. It does not
 
 ## Artifact Integrity
 
-Paper-facing CSV files and figures are checksum-bound by their manifests. A post-manuscript clean-clone audit records the exact commit, test result, tracked publication files, and checksum chain used for this release.
+Paper-facing CSV files and figures are checksum-bound by their manifests. A fresh server-side clone of candidate `ff5b959` passed all 124 project tests. The post-manuscript audit then verified all 90 condition markers, tracked publication files, matrix ancestry, and analysis, bootstrap, and figure checksum chains. The release metadata commit adds that audit report without changing the manuscript or empirical outputs.
