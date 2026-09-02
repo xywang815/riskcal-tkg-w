@@ -162,7 +162,10 @@ def _audit_git(project_root: Path, matrix_commit: str, paths: Iterable[Path]) ->
         except ValueError as error:
             raise ValueError(f"release path leaves project root: {relative}") from error
         if absolute.is_dir():
-            files.extend(path for path in absolute.rglob("*") if path.is_file())
+            tracked = _run_git(project_root, ["ls-files", "--", str(relative)])
+            if not tracked:
+                raise ValueError(f"release directory has no tracked files: {relative}")
+            files.extend(project_root / path for path in tracked.splitlines())
         elif absolute.is_file():
             files.append(absolute)
         else:

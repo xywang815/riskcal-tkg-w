@@ -70,6 +70,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
         destination = project / path
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(path, encoding="utf-8")
+    (project / ".gitignore").write_text("__pycache__/\n*.pyc\n", encoding="utf-8")
     _git(project, "init")
     _git(project, "config", "user.email", "test@example.com")
     _git(project, "config", "user.name", "Test")
@@ -156,6 +157,9 @@ def test_audit_expansion_release_accepts_complete_tracked_evidence(
     tmp_path: Path,
 ) -> None:
     project, matrix, analysis, bootstrap, figures = _fixture(tmp_path)
+    cache = project / "src" / "riskcal_tkg" / "__pycache__" / "model.pyc"
+    cache.parent.mkdir(parents=True)
+    cache.write_bytes(b"ignored cache")
 
     audit = audit_expansion_release(
         project,
