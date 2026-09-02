@@ -285,8 +285,14 @@ def build_reviewer_diagnostics(
     method["method_rank"] = method["baseline"].map(
         {v: i for i, v in enumerate(METHOD_ORDER)})
     method = method.sort_values(["run_rank", "method_rank"], kind="stable")
+    diagnostic_run_labels = {
+        "icews14_distmult_filtered": "ICEWS14 | DistMult",
+        "icews14_tcomplex_filtered": "ICEWS14 | cComplEx",
+        "icews05_15_distmult_filtered": "ICEWS05-15 | DistMult",
+        "icews05_15_tcomplex_filtered": "ICEWS05-15 | cComplEx",
+    }
     method_labels = [
-        f"{RUN_LABELS.get(run, run)} | {METHOD_LABELS.get(base, base)}"
+        f"{diagnostic_run_labels.get(run, run)} | {METHOD_LABELS.get(base, base)}"
         for run, base in zip(method["run"], method["baseline"], strict=True)
     ]
     method_colors = [METHOD_COLORS.get(value, "#777777") for value in method["baseline"]]
@@ -298,7 +304,7 @@ def build_reviewer_diagnostics(
     )
     deletion = deletion.sort_values(["run_rank", "method_rank"], kind="stable")
     deletion_labels = [
-        f"{RUN_LABELS.get(run, run)} | {METHOD_LABELS.get(method_name, method_name)}"
+        f"{diagnostic_run_labels.get(run, run)} | {METHOD_LABELS.get(method_name, method_name)}"
         for run, method_name in zip(deletion["run"], deletion["method"], strict=True)
     ]
     deletion_colors = [METHOD_COLORS.get(value, "#777777") for value in deletion["method"]]
@@ -307,8 +313,18 @@ def build_reviewer_diagnostics(
     sampling = sampling.sort_values(
         ["dataset_mode", "model_name", "deletion_rate", "method"], kind="stable"
     )
+    diagnostic_dataset_labels = {
+        "icews14": "ICEWS14",
+        "icews05_15": "ICEWS05-15",
+    }
+    diagnostic_model_labels = {
+        "temporal_distmult": "DistMult",
+        "continuous_tcomplex": "cComplEx",
+    }
     sampling_labels = [
-        f"{dataset} | {model} | delete {rate:.0%} | {METHOD_LABELS.get(method_name, method_name)}"
+        f"{diagnostic_dataset_labels.get(dataset, dataset)} | "
+        f"{diagnostic_model_labels.get(model, model)} | "
+        f"delete {rate:.0%} | {METHOD_LABELS.get(method_name, method_name)}"
         for dataset, model, rate, method_name in zip(
             sampling["dataset_mode"],
             sampling["model_name"],
@@ -319,7 +335,13 @@ def build_reviewer_diagnostics(
     ]
     sampling_colors = [METHOD_COLORS.get(value, "#777777") for value in sampling["method"]]
 
-    fig, axes = plt.subplots(1, 3, figsize=(12.2, 5.6), constrained_layout=True)
+    fig = plt.figure(figsize=(7.25, 8.3), constrained_layout=True)
+    grid = fig.add_gridspec(3, 1, height_ratios=(1.55, 0.78, 0.9))
+    axes = (
+        fig.add_subplot(grid[0, 0]),
+        fig.add_subplot(grid[1, 0]),
+        fig.add_subplot(grid[2, 0]),
+    )
     _effect_panel(
         axes[0], method, method_labels, method_colors,
         "Rolling minus static baseline", "(a)",

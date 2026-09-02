@@ -4,7 +4,7 @@ This repository contains code and paper-facing artifacts for a diagnostic study 
 
 Repository URL: https://github.com/xywang815/riskcal-tkg-w
 
-The study evaluates whether static conformal-style calibration becomes stale on an ICEWS14 temporal event stream and whether rolling prequential calibration improves empirical observed-label coverage. It also reports the utility cost of calibrated answer sets, including query-level coverage, set-size diagnostics, relation-side worst-group diagnostics, delayed-feedback sensitivity, rolling-window ablations, rank shortlists, and validation-selected RAPS rolling.
+The study evaluates whether a static conformal-style threshold can become stale on temporally ordered event streams and whether rolling prequential calibration improves empirical observed-label coverage. The final confirmatory matrix covers ICEWS14 and ICEWS05-15, temporal DistMult and a matched-protocol continuous-time complex scorer, five seeds, controlled training-fact deletion, and filtered-negative sensitivity. It also reports prediction-set cost and multi-answer full-set coverage.
 
 ## Scope
 
@@ -26,11 +26,11 @@ The experiments use the public ICEWS14 and ICEWS05-15 temporal knowledge graph b
 
 ## Main Experimental Claim
 
-Under the stated ICEWS14 protocol, static calibration under-covers later timestamps, while rolling prequential calibration restores near-target average observed-label coverage. The same reliability repair can require large answer sets, so the paper reports reliability and candidate-set utility jointly.
+Under the stated protocols, rolling margin calibration restores near-target average observed-label coverage where static margin and KGCP Softmax under-cover. The comparison with KGCP Minmax and NegScore is dataset-dependent, and the reliability repair can require thousands of candidates. Multi-answer full-set coverage remains substantially below single-answer coverage. The repository therefore supports a bounded reliability--utility conclusion, not universal superiority.
 
 ## Reproducibility
 
-The project records resolved configurations, seeds, deletion rates, derived paper-facing metric tables, and figures. Large transient artifacts such as checkpoints, logs, transfer archives, and build products are excluded from Git.
+The project records resolved configurations, seeds, deletion rates, derived paper-facing metric tables, checksum-bound figures, and clean-clone release audits. Large transient artifacts such as checkpoints, raw query dumps, logs, transfer archives, and build products are excluded from Git.
 
 Recommended local setup:
 
@@ -41,7 +41,7 @@ python -m pip install -e .
 python -m pytest -q
 ```
 
-The full confirmatory run requires a CUDA-capable GPU. Paper-facing diagnostic tables can be reproduced from completed run artifacts using the scripts in `scripts/`.
+The full confirmatory matrix requires a CUDA-capable GPU. The committed paper-facing tables and figures can be verified and rebuilt without retraining; the raw checkpoint and query-level exports are intentionally excluded because of size.
 
 Prepare the historical ICEWS14 input used by the original experiment:
 
