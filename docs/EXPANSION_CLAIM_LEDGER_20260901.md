@@ -36,7 +36,7 @@ terminal screenshots are not paper evidence.
 | Filtered negative sampling | E5 paired with E2; E6 paired with E3 | Same seeds, timestamps, deletion rates, model family, and evaluation labels | Report the direction and uncertainty even if filtered sampling has negligible or adverse effect | Passed; rolling effects are small and all four 95% intervals cross zero |
 | Multi-answer degradation | Formal `per_query.parquet` from E1-E4; answer-set reconstruction by query | `answer_count` agrees with distinct labels; single/multi full-set coverage gap is estimable | Disclose magnitude prominently and discuss why label-wise and full-set coverage differ | Passed; rolling gaps range from -0.2174 to -0.3054 and remain a primary limitation |
 | Deletion motivation | E1-E4 deletion 0 versus 0.30 paired contrasts | Timestamp-block interval excludes zero in a consistent adverse direction | Narrow the motivation to temporal calibration mismatch; explicitly report null/non-monotone deletion effects | Acceptance condition failed; every static-margin interval crosses zero, so deletion is retained only as a controlled stress axis |
-| Public traceability | Final commits, result checksums, clean-clone commands, release/tag | Final scripts/configs/CSV/checksums reproduce figures and are public | Manuscript cannot claim artifact availability until the public release resolves | Final server outputs checksum-verified; tracking and clean-clone release audit pending |
+| Public traceability | Final commits, result checksums, clean-clone commands, release/tag | Final scripts/configs/CSV/checksums reproduce figures and are public | Manuscript cannot claim artifact availability until the public release resolves | Pre-manuscript clean-clone audit passed at `25df0b1` with 124 tests; final manuscript audit, public push, and release/tag remain pending |
 
 ## Formal output authority
 
@@ -96,6 +96,8 @@ Fill this table only from verified final CSV/JSON files.
 
 ## Final revision gate
 
-The manuscript may be unlocked only when every row above has a verified source
-or an explicit negative result, all figures are generated from those sources,
-and the public release contains the exact scripts and configuration identities.
+The manuscript was unlocked after every empirical row had a verified source or
+an explicit negative result, the figures were generated from those sources, and
+the pre-manuscript clean-clone audit passed. The final manuscript may state that
+artifacts are public only after the post-manuscript audit, GitHub push, and
+release/tag are complete.

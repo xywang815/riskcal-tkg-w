@@ -205,6 +205,7 @@ a checksum manifest when more than two files are produced.
 | 2026-09-02 | Interpreted primary expansion effects and froze allowed claims | source matrix commit `52beca5`; block length 7; 20,000 iterations | local verified CSV/JSON bundle | Result summary `docs/EXPANSION_RESULT_SUMMARY_20260902.md`; analysis manifest `2ef91e41...`; bootstrap summary `4c1e3b97...` | Rolling reaches near-nominal aggregate coverage but requires larger sets; ICEWS14 KGCP Minmax/NegScore contrasts are inconclusive; multi-answer gaps remain large; deletion and filtered-sampling effects are mostly small or inconclusive. |
 | 2026-09-02 | Visually inspected the three expansion figures | generator commit `11cb553`; figure manifest `5cc7c681...` | local `paper/figures/expansion` | Figure hashes verified by `SHA256SUMS.txt` | All PDF/PNG panels were nonblank, complete, readable, and free of cropping or overlap. |
 | 2026-09-02 | Staged the verified paper-facing evidence for version control | analysis exporter `356dee7`; bootstrap exporter `7fec5c4`; figure generator `11cb553` | `paper/data/expansion` and `paper/figures/expansion` | Every staged checksum list passed after copying | Final CSVs, formal/pilot configs, audits, manifests, and figures are ready for the release-candidate commit; clean-clone audit remains pending. |
+| 2026-09-02 | Passed the pre-manuscript clean-clone release audit | release-audit commit `25df0b167fc6b26f80b23094a18208c0fa1576c6`; source matrix commit `52beca5c0ded61dc071c410ccf9cbd05691ac92e` | fresh server clone `/root/autodl-tmp/riskcal_release_audit_25df0b1_20260902` | `124 passed`; audit status `passed`; audit SHA-256 `93348d41108aa9587565ff0ca081fe356c29f704b2862cf10625937d1037c5de` | The verified evidence is sufficient to unlock one-pass manuscript revision. Public GitHub push and the final post-manuscript release audit/tag remain pending and must precede any claim that the final artifact is publicly available. |
 
 ## Decision log
 
@@ -235,7 +236,8 @@ a checksum manifest when more than two files are produced.
 - [x] Full expansion matrix completed with logs and checkpoints.
 - [x] Multi-answer and deletion-interaction diagnostics interpreted and entered in the claim ledger.
 - [x] Server-side analysis, bootstrap, and figure output manifests and checksums verified.
+- [x] Pre-manuscript clean-clone reproduction and release audit passed.
 - [ ] Manuscript unlocked and revised once from the verified evidence table.
 - [ ] Submission PDF, figures, and statements pass final QA.
-- [ ] Clean-clone reproduction check passes.
+- [ ] Final post-manuscript clean-clone reproduction check passes.
 - [ ] Public branch updated and self-describing release/tag created.

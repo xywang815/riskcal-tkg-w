@@ -19,6 +19,11 @@ terminal summaries are excluded.
   `4c1e3b97f208e126375a914c33b254bb576dfc2c8c8b696b2ad8dbaba4bd5e01`.
 - Figure manifest SHA-256:
   `5cc7c6815eecd3db02c0a41e1310cf8f37083e0a9821914f3e031c0567693116`.
+- Pre-manuscript release-audit commit:
+  `25df0b167fc6b26f80b23094a18208c0fa1576c6`.
+- Pre-manuscript release-audit SHA-256:
+  `93348d41108aa9587565ff0ca081fe356c29f704b2862cf10625937d1037c5de`;
+  status `passed` after 124 tests in a fresh server clone.
 - Primary uncertainty analysis: 20,000-iteration equal-seed circular
   moving-block bootstrap, block length 7, with lengths 3, 14, and 21 retained
   as sensitivity checks.
@@ -140,4 +145,5 @@ calibration conclusions.
 The three checksum-bound figure pairs were visually inspected at full-page
 resolution. All panels were nonblank and complete; axes, legends, intervals,
 and annotations were readable; no panel was cropped or overlapped. The figures
-are suitable for manuscript integration after the clean-clone release audit.
+are suitable for manuscript integration. Public-availability language remains
+blocked until the final post-manuscript audit and GitHub release are complete.
