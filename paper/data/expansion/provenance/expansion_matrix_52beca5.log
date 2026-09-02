@@ -1,0 +1,13 @@
+nohup: ignoring input
+[matrix] starting icews14_distmult_filtered
+[matrix] completed icews14_distmult_filtered: results/expansion_formal/icews14_distmult_filtered/20260831T183333122638Z-7584b3c257f7
+[matrix] starting icews14_tcomplex_filtered
+[matrix] completed icews14_tcomplex_filtered: results/expansion_formal/icews14_tcomplex_filtered/20260831T202456266777Z-219d03258eac
+[matrix] starting icews05_15_distmult_filtered
+[matrix] completed icews05_15_distmult_filtered: results/expansion_formal/icews05_15_distmult_filtered/20260831T224928259632Z-dffbfb732f3d
+[matrix] starting icews05_15_tcomplex_filtered
+[matrix] completed icews05_15_tcomplex_filtered: results/expansion_formal/icews05_15_tcomplex_filtered/20260901T095614728667Z-946c4477453d
+[matrix] starting icews05_15_distmult_uniform_sensitivity
+[matrix] completed icews05_15_distmult_uniform_sensitivity: results/expansion_formal/icews05_15_distmult_uniform_sensitivity/20260901T170951980802Z-4a0151ce4650
+[matrix] starting icews14_tcomplex_uniform_sensitivity
+[matrix] completed icews14_tcomplex_uniform_sensitivity: results/expansion_formal/icews14_tcomplex_uniform_sensitivity/20260901T215952569118Z-936518147fc8
