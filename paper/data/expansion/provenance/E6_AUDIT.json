@@ -1,0 +1,56 @@
+{
+  "answer_count_max": 17,
+  "answer_count_min": 1,
+  "checkpoints": 10,
+  "condition_markers": 10,
+  "config_sha256": "d0c954d78655da49949dfe953986fd75718b259a484d11fa48c6cfe46fc995d6",
+  "coverage_max": 0.9649122807017544,
+  "coverage_min": 0.1629392971246006,
+  "datasets": [
+    "icews14"
+  ],
+  "deletion_rates": [
+    0.0,
+    0.3
+  ],
+  "duration_seconds": 3566.3592215925455,
+  "leakage_violations": 0,
+  "manifest_query_rows": 1157880,
+  "manifest_window_rows": 5840,
+  "methods": [
+    "adaptive",
+    "kgcp_minmax_static",
+    "kgcp_negscore_static",
+    "kgcp_softmax_static",
+    "rolling_margin",
+    "static_margin",
+    "top1",
+    "weighted"
+  ],
+  "models": [
+    "continuous_tcomplex"
+  ],
+  "multi_answer_label_rows": 242130,
+  "multiplicity_invalid_groups": 0,
+  "negative_sampling": [
+    "uniform"
+  ],
+  "nonfinite_core_metrics": 0,
+  "query_files": 10,
+  "query_rows": 1157880,
+  "resource_records": 10,
+  "run_manifest_sha256": "8b1567858abbd8e414812cc92dc27056921d55290d01b6f0dac025a415aa6ad8",
+  "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews14_tcomplex_uniform_sensitivity/20260901T215952569118Z-936518147fc8",
+  "seeds": [
+    17,
+    29,
+    43,
+    59,
+    71
+  ],
+  "set_size_max": 7128,
+  "set_size_min": 1,
+  "status": "complete",
+  "window_files": 10,
+  "window_rows": 5840
+}

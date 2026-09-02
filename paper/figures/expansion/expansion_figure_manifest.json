@@ -1,0 +1,21 @@
+{
+  "block_length": 7,
+  "created_at": "2026-09-01T23:31:02.601788+00:00",
+  "inputs": {
+    "analysis": {
+      "condition_aggregate.csv": "083a59446830c44b94edd6d031f62be92de75cd8d1c5028588986b2f1dca3880"
+    },
+    "bootstrap": {
+      "expansion_bootstrap_summary.csv": "4c1e3b97f208e126375a914c33b254bb576dfc2c8c8b696b2ad8dbaba4bd5e01"
+    }
+  },
+  "outputs": {
+    "expansion_generalization.pdf": "6cf3eaa3d75e8545db21a41a94f78110b138c32861a786dd7d49c55895ceeab5",
+    "expansion_generalization.png": "7065f3d498450594121f5d097a1e286aa954d09310764c1bcf12a9960b0608d8",
+    "expansion_multi_answer.pdf": "219e36feb4fb92d9d352301c9a5b23c9b9a3103e6386a5a9d3df98730f946f05",
+    "expansion_multi_answer.png": "b0d328a858767976ee147400b6a09de12542dfb53bc2f9087c0592c2d40fbaf1",
+    "expansion_reviewer_diagnostics.pdf": "f2e9c47b384b0bd8472c0cff65bf4f707da66c2ec53807b12af33bd4c99c1df2",
+    "expansion_reviewer_diagnostics.png": "fb28498438f37edf20476a7592f74d8959bd3acfe932f8a328fc3623cd692661"
+  },
+  "script_sha256": "440d7d1c4f04004d9c583ce4c92de67c74d279b462da21d4a0e04b45362e785f"
+}

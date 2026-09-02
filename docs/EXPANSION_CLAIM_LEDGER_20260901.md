@@ -30,12 +30,12 @@ terminal screenshots are not paper evidence.
 
 | Reviewer issue | Formal evidence | Acceptance condition | Required reporting if condition fails | Status |
 | --- | --- | --- | --- | --- |
-| Baseline identity | E1-E4 condition summaries for all three KGCP score transforms plus `static_margin` | Names, score definitions, temperature, split, and calibration role are explicit | State that these are matched-protocol score-transform baselines, not an exact end-to-end reproduction | E1-E4 structure audits passed; effect interpretation pending |
-| Dataset generalization | E2 and E4 on official ICEWS05-15 | Complete five-seed manifests, no leakage, finite nondegenerate scores | Describe any dataset-specific failure and avoid universal claims | E2 and E4 structure audits passed; interpretation pending |
-| Scorer generalization | E3 and E4 with `continuous_tcomplex` | Complete five-seed manifests, no leakage, finite nondegenerate scores | Call the evidence model-specific and retain DistMult as the only positive setting if necessary | E3 and E4 structure audits passed; interpretation pending |
-| Filtered negative sampling | E5 paired with E2; E6 paired with E3 | Same seeds, timestamps, deletion rates, model family, and evaluation labels | Report the direction and uncertainty even if filtered sampling has negligible or adverse effect | E2/E5 and E3/E6 structure matches passed; effect estimation pending |
-| Multi-answer degradation | Formal `per_query.parquet` from E1-E4; answer-set reconstruction by query | `answer_count` agrees with distinct labels; single/multi full-set coverage gap is estimable | Disclose magnitude prominently and discuss why label-wise and full-set coverage differ | E1-E4 multiplicity structure passed; effect estimation pending |
-| Deletion motivation | E1-E4 deletion 0 versus 0.30 paired contrasts | Timestamp-block interval excludes zero in a consistent adverse direction | Narrow the motivation to temporal calibration mismatch; explicitly report null/non-monotone deletion effects | E1-E4 inputs complete; timestamp-block estimation pending |
+| Baseline identity | E1-E4 condition summaries for all three KGCP score transforms plus `static_margin` | Names, score definitions, temperature, split, and calibration role are explicit | State that these are matched-protocol score-transform baselines, not an exact end-to-end reproduction | Passed; KGCP effects are heterogeneous and the ICEWS14 Minmax/NegScore contrasts are inconclusive |
+| Dataset generalization | E2 and E4 on official ICEWS05-15 | Complete five-seed manifests, no leakage, finite nondegenerate scores | Describe any dataset-specific failure and avoid universal claims | Passed within ICEWS05-15; rolling reaches 0.9002 aggregate coverage but with 4260--4307 mean set size |
+| Scorer generalization | E3 and E4 with `continuous_tcomplex` | Complete five-seed manifests, no leakage, finite nondegenerate scores | Call the evidence model-specific and retain DistMult as the only positive setting if necessary | Passed as matched-protocol scorer evidence; effect directions largely agree with DistMult but are not an official TComplEx reproduction |
+| Filtered negative sampling | E5 paired with E2; E6 paired with E3 | Same seeds, timestamps, deletion rates, model family, and evaluation labels | Report the direction and uncertainty even if filtered sampling has negligible or adverse effect | Passed; rolling effects are small and all four 95% intervals cross zero |
+| Multi-answer degradation | Formal `per_query.parquet` from E1-E4; answer-set reconstruction by query | `answer_count` agrees with distinct labels; single/multi full-set coverage gap is estimable | Disclose magnitude prominently and discuss why label-wise and full-set coverage differ | Passed; rolling gaps range from -0.2174 to -0.3054 and remain a primary limitation |
+| Deletion motivation | E1-E4 deletion 0 versus 0.30 paired contrasts | Timestamp-block interval excludes zero in a consistent adverse direction | Narrow the motivation to temporal calibration mismatch; explicitly report null/non-monotone deletion effects | Acceptance condition failed; every static-margin interval crosses zero, so deletion is retained only as a controlled stress axis |
 | Public traceability | Final commits, result checksums, clean-clone commands, release/tag | Final scripts/configs/CSV/checksums reproduce figures and are public | Manuscript cannot claim artifact availability until the public release resolves | Final server outputs checksum-verified; tracking and clean-clone release audit pending |
 
 ## Formal output authority
@@ -86,13 +86,13 @@ Fill this table only from verified final CSV/JSON files.
 
 | Evidence item | Point estimate | 95% interval / seed SD | Source file and SHA-256 | Allowed manuscript conclusion |
 | --- | ---: | ---: | --- | --- |
-| E1 rolling vs static/KGCP at deletion 0.30 | Pending | Pending | Pending | Pending |
-| E2 added-dataset result | Pending | Pending | Pending | Pending |
-| E3 added-scorer result | Pending | Pending | Pending | Pending |
-| E4 joint boundary result | Pending | Pending | Pending | Pending |
-| E5/E6 filtered-sampling sensitivity | Pending | Pending | Pending | Pending |
-| Multi-answer full-set coverage gap | Pending | Pending | Pending | Pending |
-| Static deletion effect | Pending | Pending | Pending | Pending |
+| E1 rolling vs static/KGCP at deletion 0.30 | Rolling 0.8996; static 0.8198; KGCP Minmax 0.9013; KGCP NegScore 0.8987; KGCP Softmax 0.8207 | Rolling-static gain 0.0798 [0.0621, 0.0999]; rolling-Minmax -0.0017 [-0.0074, 0.0042]; rolling-NegScore 0.0009 [-0.0058, 0.0085] | `condition_aggregate.csv` `083a5944...`; `expansion_bootstrap_summary.csv` `4c1e3b97...` | Rolling corrects static-margin/Softmax undercoverage on ICEWS14 but does not reliably improve on KGCP Minmax or NegScore |
+| E2 added-dataset result | DistMult rolling 0.9002, mean size 4307.2; static 0.7991, mean size 2361.7 | Rolling-static gain 0.1011 [0.0921, 0.1102]; rolling-Minmax gain 0.0436 [0.0387, 0.0486] | Same verified files above | On ICEWS05-15, rolling improves aggregate coverage across all static comparators, at a substantial set-size cost |
+| E3 added-scorer result | ICEWS14 complex rolling 0.8988; static 0.8186; KGCP Minmax 0.8999 | Rolling-static gain 0.0802 [0.0612, 0.1012]; rolling-Minmax -0.0010 [-0.0072, 0.0058] | Same verified files above | The DistMult pattern reproduces for the matched-protocol complex scorer, including the null Minmax contrast |
+| E4 joint boundary result | ICEWS05-15 complex rolling 0.9002, mean size 4260.1; static 0.7977 | Rolling-static gain 0.1025 [0.0937, 0.1111]; rolling-Minmax gain 0.0471 [0.0418, 0.0524] | Same verified files above | Added-dataset evidence persists with the second scorer but should not be generalized beyond the tested event KGs |
+| E5/E6 filtered-sampling sensitivity | Rolling filtered-minus-uniform changes: 0.0003, 0.0002, -0.0001, 0.0001 | All rolling 95% intervals cross zero; one small static effect is 0.0020 [0.0005, 0.0038] | `sampling_contrasts_by_seed.csv` `b09ae717...`; bootstrap summary `4c1e3b97...` | Training-negative filtering has little effect on the coverage conclusions in the tested pairs |
+| Multi-answer full-set coverage gap | Rolling gaps range from -0.2174 to -0.3054 | All four 95% intervals are strictly negative; e.g. ICEWS14 DistMult -0.2792 [-0.2992, -0.2600] | `multi_answer_degradation_aggregate.csv` `80d64242...`; bootstrap summary `4c1e3b97...` | Multi-answer reliability remains materially worse and must be a prominent limitation/result |
+| Static deletion effect | Changes range from -0.0024 to -0.0004 across four filtered settings | All 95% intervals cross zero | `deletion_effects_by_seed.csv` `4bc3c57d...`; bootstrap summary `4c1e3b97...` | Do not motivate the method by claiming deletion worsens static calibration; frame deletion as a stress test |
 
 ## Final revision gate
 

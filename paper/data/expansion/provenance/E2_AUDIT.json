@@ -1,0 +1,58 @@
+{
+  "answer_count_max": 12,
+  "answer_count_min": 1,
+  "checkpoints": 20,
+  "condition_markers": 20,
+  "config_sha256": "73933ad43749a87fbee063ad70867ffbd6460122c745eefef51d6798a6ef199d",
+  "coverage_max": 1.0,
+  "coverage_min": 0.0857142857142857,
+  "datasets": [
+    "icews05_15"
+  ],
+  "deletion_rates": [
+    0.0,
+    0.1,
+    0.2,
+    0.3
+  ],
+  "duration_seconds": 40001.36762776971,
+  "leakage_violations": 0,
+  "manifest_query_rows": 11418600,
+  "manifest_window_rows": 128640,
+  "methods": [
+    "adaptive",
+    "kgcp_minmax_static",
+    "kgcp_negscore_static",
+    "kgcp_softmax_static",
+    "rolling_margin",
+    "static_margin",
+    "top1",
+    "weighted"
+  ],
+  "models": [
+    "temporal_distmult"
+  ],
+  "multi_answer_label_rows": 1823700,
+  "multiplicity_invalid_groups": 0,
+  "negative_sampling": [
+    "filtered"
+  ],
+  "nonfinite_core_metrics": 0,
+  "query_files": 20,
+  "query_rows": 11418600,
+  "resource_records": 20,
+  "run_manifest_sha256": "b7e691b9b0a265f9032a491ad08f87ed9a75664d3f56e394edad7ac010a4c86c",
+  "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews05_15_distmult_filtered/20260831T224928259632Z-dffbfb732f3d",
+  "seeds": [
+    17,
+    29,
+    43,
+    59,
+    71
+  ],
+  "set_size_max": 10488,
+  "set_size_min": 1,
+  "status": "complete",
+  "window_files": 20,
+  "window_rows": 128640
+}

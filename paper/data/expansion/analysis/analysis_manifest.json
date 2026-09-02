@@ -1,0 +1,62 @@
+{
+  "created_at": "2026-09-01T23:10:10.293535+00:00",
+  "expected_runs": [
+    "icews14_distmult_filtered",
+    "icews14_tcomplex_filtered",
+    "icews05_15_distmult_filtered",
+    "icews05_15_tcomplex_filtered",
+    "icews05_15_distmult_uniform_sensitivity",
+    "icews14_tcomplex_uniform_sensitivity"
+  ],
+  "git_commit": "52beca5c0ded61dc071c410ccf9cbd05691ac92e",
+  "inputs": {
+    "icews05_15_distmult_filtered": {
+      "per_query_sha256": "134de64a42ad504a06a23f730dcd640385aee193746d5215cfb8882b3ba1e03c",
+      "per_window_sha256": "8dcf66410d247078214edfcb208702c2abd1bf348ef8654d8d51c4f53819a8f2",
+      "run_manifest_sha256": "b7e691b9b0a265f9032a491ad08f87ed9a75664d3f56e394edad7ac010a4c86c",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews05_15_distmult_filtered/20260831T224928259632Z-dffbfb732f3d"
+    },
+    "icews05_15_distmult_uniform_sensitivity": {
+      "per_query_sha256": "4b9fe593fe4d963dc6b30de556d1c5c9b7a0cca184c5d9961f8a2fb62f7db20d",
+      "per_window_sha256": "354b8ae55cf4d8cb950f1b2592193c83eb50754e24db9d18413a114fe2a6014a",
+      "run_manifest_sha256": "7a1be1cdac310ae61c7542f7da84b45ed81c56ddac71d23423e6528861cb6ab4",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews05_15_distmult_uniform_sensitivity/20260901T170951980802Z-4a0151ce4650"
+    },
+    "icews05_15_tcomplex_filtered": {
+      "per_query_sha256": "d1ebb115d1e3e94598be092529c834cd0608885559b1047a412e84bf97334edf",
+      "per_window_sha256": "11dbb29e99581dc7e3188711e3ebf2116bda8575e0aa10d398d3179ad470e3be",
+      "run_manifest_sha256": "6be2b8327f37556090dbf27590b5819f78911d2467a912fb803616a9af996c38",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews05_15_tcomplex_filtered/20260901T095614728667Z-946c4477453d"
+    },
+    "icews14_distmult_filtered": {
+      "per_query_sha256": "bafc4bc1cb7b4fa81653f6525ac48a7e221a944910404ec1199374e490e36792",
+      "per_window_sha256": "08b325b6e2cba276b6c6e647942f03324858bac57018b17f2f356b6daafe484d",
+      "run_manifest_sha256": "6e0374236d2b8f65d148c47bc83be46acbd08cec34f089b77e24e2372c1003a4",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews14_distmult_filtered/20260831T183333122638Z-7584b3c257f7"
+    },
+    "icews14_tcomplex_filtered": {
+      "per_query_sha256": "a8753cd65b0be0c73c670b4319386950d7a8253e46c83554dc5dc0316362eee6",
+      "per_window_sha256": "ef110deb85601547ca61dae9dd7cf6a698c2246d874800ac63b51ba5221e22c1",
+      "run_manifest_sha256": "36ae8a6c3434c2a7c3fadeae51db0180f321dad55cd5140d5828505b0fe94ea0",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews14_tcomplex_filtered/20260831T202456266777Z-219d03258eac"
+    },
+    "icews14_tcomplex_uniform_sensitivity": {
+      "per_query_sha256": "7e171b3b8db04c89d350ca2e44e9c8978e17949680de90dd18e6234c98231a27",
+      "per_window_sha256": "7508ca668d9a8bec94bb6c85731d2e1425217f5504bf71c69a1e1145fc3dae3a",
+      "run_manifest_sha256": "8b1567858abbd8e414812cc92dc27056921d55290d01b6f0dac025a415aa6ad8",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews14_tcomplex_uniform_sensitivity/20260901T215952569118Z-936518147fc8"
+    }
+  },
+  "outputs": {
+    "condition_aggregate.csv": "083a59446830c44b94edd6d031f62be92de75cd8d1c5028588986b2f1dca3880",
+    "condition_by_seed.csv": "67ce37b57e7f15f389e12a6e483331ed2d3dd1ba91c2a589ce04a2b2e925b369",
+    "deletion_effects_by_seed.csv": "4bc3c57d695da4d5386142fa1c2fc12ff6b7eed6d497eb6f56e48b68b05c1a6f",
+    "method_contrasts_by_seed.csv": "cd9302ee0e830428c8812b5308ddf7997bedf4bfad8f6d8c9a443e3853e58822",
+    "multi_answer_aggregate.csv": "d82ffd0e5c9a93fb44daebea4770f63213f9a2212cc9af902c49d18d54b6a536",
+    "multi_answer_by_seed.csv": "73cf2a03cf8a0dc150fd765d53c80ecf40c5c737b641d9337faec3aa5ed49841",
+    "multi_answer_degradation_aggregate.csv": "80d6424212e78b9c07fbc3469afaa20a0e02211376f7b1071ada3092352593a4",
+    "multi_answer_degradation_by_seed.csv": "28847192c92a0d0fd83b1dc4095001132f2f47317455a0e2391530e4aadda95b",
+    "sampling_contrasts_by_seed.csv": "b09ae717452dce8b24b9468706b6dc5e35dcadb4349f7b394de3324015b05df8"
+  },
+  "target_coverage": 0.9
+}

@@ -1,0 +1,54 @@
+{
+  "created_at": "2026-08-31T18:33:32.448235+00:00",
+  "git_commit": "52beca5c0ded61dc071c410ccf9cbd05691ac92e",
+  "runs": {
+    "icews05_15_distmult_filtered": {
+      "completed_at": "2026-09-01T09:56:09.997031+00:00",
+      "config": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/configs/expansion/icews05_15_distmult_filtered.yaml",
+      "config_sha256": "73933ad43749a87fbee063ad70867ffbd6460122c745eefef51d6798a6ef199d",
+      "run_manifest_sha256": "b7e691b9b0a265f9032a491ad08f87ed9a75664d3f56e394edad7ac010a4c86c",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews05_15_distmult_filtered/20260831T224928259632Z-dffbfb732f3d",
+      "status": "complete"
+    },
+    "icews05_15_distmult_uniform_sensitivity": {
+      "completed_at": "2026-09-01T21:59:51.988433+00:00",
+      "config": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/configs/expansion/icews05_15_distmult_uniform_sensitivity.yaml",
+      "config_sha256": "937385bfafc28ead17a627a50aef774fea4f06908cb9d4b2fb50c7115228924e",
+      "run_manifest_sha256": "7a1be1cdac310ae61c7542f7da84b45ed81c56ddac71d23423e6528861cb6ab4",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews05_15_distmult_uniform_sensitivity/20260901T170951980802Z-4a0151ce4650",
+      "status": "complete"
+    },
+    "icews05_15_tcomplex_filtered": {
+      "completed_at": "2026-09-01T17:09:47.528164+00:00",
+      "config": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/configs/expansion/icews05_15_tcomplex_filtered.yaml",
+      "config_sha256": "892ffcf383011c835b6fb4ab8f308f11e99c36098260249e3ee7383ee1178f5b",
+      "run_manifest_sha256": "6be2b8327f37556090dbf27590b5819f78911d2467a912fb803616a9af996c38",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews05_15_tcomplex_filtered/20260901T095614728667Z-946c4477453d",
+      "status": "complete"
+    },
+    "icews14_distmult_filtered": {
+      "completed_at": "2026-08-31T20:24:55.688174+00:00",
+      "config": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/configs/expansion/icews14_distmult_filtered.yaml",
+      "config_sha256": "b8159bc51883a7ddc1d0ef1d362605d278c2966ec9c73e746780273b912c8f62",
+      "run_manifest_sha256": "6e0374236d2b8f65d148c47bc83be46acbd08cec34f089b77e24e2372c1003a4",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews14_distmult_filtered/20260831T183333122638Z-7584b3c257f7",
+      "status": "complete"
+    },
+    "icews14_tcomplex_filtered": {
+      "completed_at": "2026-08-31T22:49:24.126702+00:00",
+      "config": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/configs/expansion/icews14_tcomplex_filtered.yaml",
+      "config_sha256": "1533ec683c34ee7e556c4b0be7761e8549288f72f654799a0718b82a8c693160",
+      "run_manifest_sha256": "36ae8a6c3434c2a7c3fadeae51db0180f321dad55cd5140d5828505b0fe94ea0",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews14_tcomplex_filtered/20260831T202456266777Z-219d03258eac",
+      "status": "complete"
+    },
+    "icews14_tcomplex_uniform_sensitivity": {
+      "completed_at": "2026-09-01T22:59:18.990055+00:00",
+      "config": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/configs/expansion/icews14_tcomplex_uniform_sensitivity.yaml",
+      "config_sha256": "d0c954d78655da49949dfe953986fd75718b259a484d11fa48c6cfe46fc995d6",
+      "run_manifest_sha256": "8b1567858abbd8e414812cc92dc27056921d55290d01b6f0dac025a415aa6ad8",
+      "run_root": "/root/autodl-tmp/riskcal_expansion_formal_52beca5/results/expansion_formal/icews14_tcomplex_uniform_sensitivity/20260901T215952569118Z-936518147fc8",
+      "status": "complete"
+    }
+  }
+}

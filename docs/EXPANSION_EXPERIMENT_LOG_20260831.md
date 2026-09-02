@@ -111,9 +111,9 @@ before inspecting any expansion outcomes.
 | Scorer | Temporal DistMult-style | Continuous-time ComplEx scorer under the matched training protocol | Implemented and pilot-validated |
 | Negative sampling | Uniform object corruption | Training-positive filtered | Implemented and unit-tested |
 | Conformal baseline | Current static/rolling margin methods | Static KGCP NegScore, Minmax, and Softmax | Implemented and unit-tested |
-| Deletion | 0.0, 0.1, 0.2, 0.3 | Same, with interaction analysis | Frozen in E1-E6; formal analysis pending |
-| Seeds | 17, 29, 43, 59, 71 | Same unless predeclared otherwise | Frozen in E1-E6; formal runs pending |
-| Multi-answer | Existing diagnostics | Cross-dataset/model stratification | Query-level multiplicity fields implemented and unit-tested; formal analysis pending |
+| Deletion | 0.0, 0.1, 0.2, 0.3 | Same, with interaction analysis | Completed; deletion 0.30-minus-zero intervals estimated and interpreted |
+| Seeds | 17, 29, 43, 59, 71 | Same unless predeclared otherwise | Completed in all 90 formal conditions |
+| Multi-answer | Existing diagnostics | Cross-dataset/model stratification | Completed; full-set coverage, partial recall, and set-size gaps estimated with timestamp-block intervals |
 
 ### Frozen expansion runs
 
@@ -201,6 +201,10 @@ a checksum manifest when more than two files are produced.
 | 2026-09-02 | Exported and checksum-verified the complete expansion analysis | analysis exporter commit `356dee7`; source matrix commit `52beca5` | `/root/autodl-tmp/expansion_final_20260902/analysis` | Analysis-manifest SHA-256 `2ef91e419cd7888c9a88e28c1392b9fbfacba339ab265612a647050e182bdad0`; checksum-list SHA-256 `62b6ecb696cefd0945fd7d08fcedd3f914daa6de6cd6555a7002efd724f07461` | All ten declared analysis files passed `sha256sum -c`. The manifest binds every input to matrix commit `52beca5`, the six run-manifest hashes, and the six aggregated window/query hashes. No manuscript text was changed. |
 | 2026-09-02 | Ran the frozen expansion timestamp-block bootstrap | bootstrap exporter commit `7fec5c4`; source matrix commit `52beca5` | `/root/autodl-tmp/expansion_final_20260902/bootstrap` | Bootstrap-manifest SHA-256 `f57517843d367d0e86461d059876782ec993f4c0ade1aef31d37c64539f08430`; summary SHA-256 `4c1e3b97f208e126375a914c33b254bb576dfc2c8c8b696b2ad8dbaba4bd5e01`; checksum-list SHA-256 `e1ff3bb4ee9c2fe51d5a6564177b67de270ae1ece6e2f0b04c83de5f3d8e62d6` | Completed 20,000 iterations with bootstrap seed `20260901`, primary deletion rate `0.30`, and block lengths 3, 7, 14, and 21. All three declared outputs passed checksum verification; 240 statistics were produced. |
 | 2026-09-02 | Generated checksum-bound expansion figures | figure-generator commit `11cb553`; script SHA-256 `440d7d1c4f04004d9c583ce4c92de67c74d279b462da21d4a0e04b45362e785f` | `/root/autodl-tmp/expansion_final_20260902/figures` | Figure-manifest SHA-256 `5cc7c6815eecd3db02c0a41e1310cf8f37083e0a9821914f3e031c0567693116`; checksum-list SHA-256 `1d4466853de545e6d9df81753183235388aa5e474306f7390bd6a72171d274d1` | Generated three PDF/PNG figure pairs from the verified analysis and block-length-7 bootstrap summary. All seven manifest-listed files passed checksum verification. Visual and manuscript integration checks remain pending. |
+| 2026-09-02 | Downloaded and independently verified the final expansion bundle | server archive SHA-256 `101fd5f15cf5c6a2ac19534046626a1929077111123c97de797e199ff2b08328` | local `output/expansion_final_20260902` | Local archive hash matched the server; analysis, bootstrap, provenance, and figure checksum lists all passed with `LC_ALL=C` | Transfer integrity passed; no paper values were taken from terminal output or screenshots. |
+| 2026-09-02 | Interpreted primary expansion effects and froze allowed claims | source matrix commit `52beca5`; block length 7; 20,000 iterations | local verified CSV/JSON bundle | Result summary `docs/EXPANSION_RESULT_SUMMARY_20260902.md`; analysis manifest `2ef91e41...`; bootstrap summary `4c1e3b97...` | Rolling reaches near-nominal aggregate coverage but requires larger sets; ICEWS14 KGCP Minmax/NegScore contrasts are inconclusive; multi-answer gaps remain large; deletion and filtered-sampling effects are mostly small or inconclusive. |
+| 2026-09-02 | Visually inspected the three expansion figures | generator commit `11cb553`; figure manifest `5cc7c681...` | local `paper/figures/expansion` | Figure hashes verified by `SHA256SUMS.txt` | All PDF/PNG panels were nonblank, complete, readable, and free of cropping or overlap. |
+| 2026-09-02 | Staged the verified paper-facing evidence for version control | analysis exporter `356dee7`; bootstrap exporter `7fec5c4`; figure generator `11cb553` | `paper/data/expansion` and `paper/figures/expansion` | Every staged checksum list passed after copying | Final CSVs, formal/pilot configs, audits, manifests, and figures are ready for the release-candidate commit; clean-clone audit remains pending. |
 
 ## Decision log
 
@@ -215,18 +219,21 @@ a checksum manifest when more than two files are produced.
 | 2026-08-31 | Keep the old margin methods but stop calling them KGCP | Method-identity audit | Expansion outputs use explicit `static_margin` and `rolling_margin`; KGCP names are reserved for the published score transforms |
 | 2026-09-01 | Record answer multiplicity in the primary query artifact rather than infer it after aggregation | Reviewer concern about multi-answer degradation; the filtered truth map is available at evaluation time | Every formal method/query row can be stratified by single- versus multi-answer status without reconstructing labels from a separate data split |
 | 2026-09-01 | Launch formal E1-E6 only from a clean clone of a committed Git bundle | The uncommitted transfer archive cannot supply a Git commit in `matrix_progress.json` | Formal matrix provenance must include a non-null commit and clean worktree before launch |
+| 2026-09-02 | Treat rolling calibration as a reliability--utility diagnostic rather than a uniformly superior method | On ICEWS14, KGCP Minmax/NegScore reach near-nominal coverage with smaller sets; on ICEWS05-15 rolling gains coverage at up to roughly 2.2x the Minmax set size | Final claims must present baseline/dataset heterogeneity and set-size cost together |
+| 2026-09-02 | Reject deletion-driven failure as the main motivation | Every deletion-0.30-minus-0.00 static-margin interval crosses zero | Deletion remains a controlled stress axis; the paper motivation narrows to temporal calibration mismatch and prequential diagnostics |
+| 2026-09-02 | Elevate multi-answer degradation to a primary reported failure mode | Rolling multi-minus-single full-set-coverage gaps range from -0.2174 to -0.3054 with strictly negative intervals | The final results, discussion, and conclusion must report the gap and avoid presenting aggregate coverage alone |
 
 ## Completion checklist
 
 - [x] Current 2026-08-31 source snapshot frozen in Git without build/QA clutter.
 - [x] Published KGCP method and code audited against the current baseline.
-- [x] Added dataset selected from a primary source; reproducible preparation script pending.
+- [x] Added dataset selected from a primary source; reproducible preparation script implemented and tested.
 - [x] Added model implemented and unit-tested; experiment documentation awaits final evidence.
 - [x] Filtered negative sampling implemented and unit-tested.
 - [x] Conformal KG baseline(s) implemented and unit-tested.
 - [x] Pilot matrix passes leakage, metric, and runtime checks.
 - [x] Full expansion matrix completed with logs and checkpoints.
-- [ ] Multi-answer and deletion-interaction diagnostics interpreted and entered in the claim ledger.
+- [x] Multi-answer and deletion-interaction diagnostics interpreted and entered in the claim ledger.
 - [x] Server-side analysis, bootstrap, and figure output manifests and checksums verified.
 - [ ] Manuscript unlocked and revised once from the verified evidence table.
 - [ ] Submission PDF, figures, and statements pass final QA.
