@@ -1,8 +1,11 @@
 # 时序知识图谱预测的预序贯答案集校准
 
-**英文题目：** Prequential Answer-Set Calibration for Temporal Knowledge Graph Forecasting  
-**作者：** Xinyu Wang  
-**单位：** 安徽信息工程学院，中国安徽芜湖 241000  
+**英文题目：** Prequential Answer-Set Calibration for Temporal Knowledge Graph Forecasting
+
+**作者：** Xinyu Wang
+
+**单位：** 安徽信息工程学院，中国安徽芜湖 241000
+
 **通信邮箱：** xywang68@iflytek.com
 
 > 本文档为英文投稿稿件的逐章中文翻译。公式、数值、置信区间和结论边界均与英文稿对应。文末“理解附录”用于帮助非专业读者理解，不属于英文投稿正文。

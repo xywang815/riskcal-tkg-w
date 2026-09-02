@@ -16,7 +16,10 @@ Thank you for considering this manuscript.
 
 Sincerely,
 
-Xinyu Wang  
-Anhui Institute of Information Technology  
-Wuhu 241000, China  
+Xinyu Wang
+
+Anhui Institute of Information Technology
+
+Wuhu 241000, China
+
 xywang68@iflytek.com
