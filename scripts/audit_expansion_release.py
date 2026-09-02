@@ -10,7 +10,10 @@ from pathlib import Path
 import subprocess
 from typing import Iterable
 
-from scripts.export_expansion_analysis import EXPECTED_RUNS
+if __package__:
+    from scripts.export_expansion_analysis import EXPECTED_RUNS
+else:
+    from export_expansion_analysis import EXPECTED_RUNS
 
 
 EXPECTED_BLOCK_LENGTHS = (3, 7, 14, 21)

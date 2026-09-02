@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import sys
 
 import pytest
 
@@ -12,6 +13,20 @@ from scripts.export_expansion_analysis import EXPECTED_RUNS
 
 
 MATRIX_COMMIT = "1" * 40
+
+
+def test_release_auditor_supports_direct_script_invocation() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, str(project_root / "scripts" / "audit_expansion_release.py"), "--help"],
+        cwd=project_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "--matrix-root" in result.stdout
 
 
 def _sha256(path: Path) -> str:
