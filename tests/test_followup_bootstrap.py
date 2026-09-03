@@ -65,7 +65,8 @@ def test_followup_bootstrap_exports_fixed_contrasts(tmp_path: Path) -> None:
                         "label_coverage": 0.8 + index * 0.01,
                         "full_set_coverage": 0.7 + index * 0.01,
                         "mean_set_size": 4.0 + index,
-                        "multi_minus_single_full_set_coverage": -0.2 + index * 0.01,
+                        "single_full_set_coverage": 0.85 + index * 0.01,
+                        "multi_full_set_coverage": 0.65 + index * 0.02,
                     }
                 )
     rows = pd.DataFrame(records)

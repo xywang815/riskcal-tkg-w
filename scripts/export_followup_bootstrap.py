@@ -108,6 +108,16 @@ def _paired_contrast(
 
 
 def _case_contrasts(rows: pd.DataFrame) -> list[dict[str, Any]]:
+    rows = rows.copy()
+    gap_column = "multi_minus_single_full_set_coverage"
+    if gap_column not in rows:
+        required = {"multi_full_set_coverage", "single_full_set_coverage"}
+        missing = sorted(required - set(rows.columns))
+        if missing:
+            raise ValueError(f"cannot derive multi-answer gap; missing {missing}")
+        rows[gap_column] = (
+            rows["multi_full_set_coverage"] - rows["single_full_set_coverage"]
+        )
     contrasts: list[dict[str, Any]] = []
 
     def add(
@@ -193,7 +203,7 @@ def _case_contrasts(rows: pd.DataFrame) -> list[dict[str, Any]]:
     add(
         family="query_objective",
         comparison="query_max_margin_rolling-minus-label_margin_rolling",
-        metric="multi_minus_single_full_set_coverage",
+        metric=gap_column,
         left="query_max_margin_rolling",
         right="label_margin_rolling",
         weight=None,
