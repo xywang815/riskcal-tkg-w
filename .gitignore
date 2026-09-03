@@ -31,3 +31,4 @@ submission/information/final_*/
 *.fdb_latexmk
 *.out
 *.synctex.gz
+*.xdv

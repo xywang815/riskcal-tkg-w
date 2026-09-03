@@ -1,6 +1,6 @@
 {
   "block_length": 7,
-  "created_at": "2026-09-02T03:02:13.564271+00:00",
+  "created_at": "2026-09-03T09:32:55.120196+00:00",
   "inputs": {
     "analysis": {
       "condition_aggregate.csv": "083a59446830c44b94edd6d031f62be92de75cd8d1c5028588986b2f1dca3880"
@@ -10,12 +10,12 @@
     }
   },
   "outputs": {
-    "expansion_generalization.pdf": "716a417b922f8e66434deece07f92ff72cffc3ecf18fad5d68bdecb0eaf0a2d4",
-    "expansion_generalization.png": "ea20f55f9d0b6d8a87803b044322ad5f90078c88d6527468750e31d6a770b016",
-    "expansion_multi_answer.pdf": "7ad4243037c779bcbd34521f7dd43b3017b4aac530e3712d3020d93308446d7b",
-    "expansion_multi_answer.png": "e4ab72e071a22bf8665fe70962c1b503833980234671a77d07a6ad7eff556498",
-    "expansion_reviewer_diagnostics.pdf": "5cede8724fd8f79654e8e852965a980c0e25d41e7d970f23f28aa2851f0d46b3",
-    "expansion_reviewer_diagnostics.png": "fbf45752fdc84248e16f6856ed39b42183cffe6bb26e690fb8e815523dd91e0d"
+    "expansion_generalization.pdf": "881da97f57ac6ce95b6363beff8292176d80a98429b30b963f9fc05861eee199",
+    "expansion_generalization.png": "3c6eb0f2bfd5cfb09370b5e588ab4339584a098f0aa93d56726da5f7dc0e67de",
+    "expansion_multi_answer.pdf": "6701c2a5df98e49e4f0787cdb0824c0ad6ef64c1538da59bab9fe068dbde7022",
+    "expansion_multi_answer.png": "ca2211aa914669f0c25627be887e09060b3235b69f175a2420cf71df511f06f0",
+    "expansion_reviewer_diagnostics.pdf": "239fd202026972d4c1403784763e618c07aaf83b67f01130376c50550cfabe81",
+    "expansion_reviewer_diagnostics.png": "ac1fc062d468e6a0e4dad83dbfe099623bce239a7bd69fdf0cce3a0c0c71b870"
   },
-  "script_sha256": "999bffbd22e04244d3f8e0718269c02ff857052f0437872df45bf38c2ee994fa"
+  "script_sha256": "28e6a56e6b2fba0ecbbfe2989c7250f3c089823fbc1a79b70d2b94ff03923e7b"
 }

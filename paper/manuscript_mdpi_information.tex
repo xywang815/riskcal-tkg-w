@@ -30,227 +30,276 @@
 $^{1}$ \quad Anhui Institute of Information Technology, Wuhu 241000, China}
 \corres{Correspondence: xywang68@iflytek.com}
 
-\abstract{Temporal knowledge graphs support event forecasting, yet ranking metrics do not show whether a model can return answer sets with reliable coverage. Static conformal calibration is attractive for this purpose, but its behavior after a temporal split is uncertain. We compare a rolling prequential margin rule with a static margin rule and three published KGCP score transformations under a timestamp-batched protocol. The study covers ICEWS14 and ICEWS05-15, temporal DistMult and a matched-protocol continuous complex scorer, five seeds, controlled deletion of training facts, and filtered-negative sensitivity. At a 0.90 target and 30\% deletion, rolling coverage ranges from 0.8988 to 0.9002. Its gain over static margin is 0.0798--0.1025, whereas its ICEWS14 contrasts with KGCP Minmax and NegScore are inconclusive. Reliability is costly: rolling sets contain 3818--4307 entities on average and are 1.63--2.22 times larger than KGCP Minmax sets. Multi-answer full-set coverage remains 0.217--0.305 below single-answer coverage. Deletion and negative-sampling effects are mostly small or inconclusive. Recent-history calibration can repair aggregate temporal undercoverage, but it is not uniformly superior and does not resolve the utility or multi-answer problem.}
+\abstract{Forecasts from temporal knowledge graphs can inform event monitoring and downstream decisions, yet standard ranking metrics do not indicate whether a returned answer set covers the recorded truth at a stated rate. Existing conformal methods for knowledge graphs mainly calibrate static link predictions. Can calibration use only previously revealed timestamp batches to repair reliability under temporal ordering, and what utility does that repair cost? We study this question with a leakage-controlled prequential protocol rather than claim validity under arbitrary drift. The evaluation crosses ICEWS14 and ICEWS05-15, two matched-protocol scoring families, five seeds, four score transformations, three history policies, controlled deletion of training facts, and filtered-negative sensitivity. At 30\% deletion and a 0.90 target, rolling margin calibration attains 0.8988--0.9002 observed-label coverage. Relative to a fixed static margin threshold, it gains 0.0798--0.1025 coverage but adds 1158--2038 entities per set. A factorial ablation shows that history and score geometry interact: rolling Minmax saves 1091--1773 entities relative to rolling margin, with dataset-dependent coverage effects, whereas rolling Softmax overcovers and adds 2081--4991 entities. Training-fact deletion and the tested negative-sampling choice do not explain the main reliability gap. Multi-answer full-set coverage remains markedly below single-answer coverage, and a query-max calibration objective further reduces full-set coverage by 0.0011--0.0081. Recent-history calibration is therefore a useful temporal reliability diagnostic, but not a uniformly efficient or universally valid solution.}
 
-\keyword{temporal knowledge graph; link forecasting; conformal prediction; prequential evaluation; uncertainty quantification; answer sets; distribution shift}
+\keyword{temporal knowledge graph; link forecasting; conformal prediction; prequential evaluation; uncertainty quantification; answer sets; temporal shift}
 
 \begin{document}
 
 \section{Introduction}
 \label{sec:introduction}
 
-Temporal knowledge graphs (TKGs) represent time-stamped relations among
-entities and are used to forecast future events, interactions, and states. A
-typical query asks which entity completes a tuple such as
-\((s,r,?,t)\). Modern TKG models are usually compared with filtered mean
-reciprocal rank (MRR) and Hits@\(K\) \cite{garciaduran2018sequence,li2021regcn,li2022tirgn,cai2023survey}.
-These metrics evaluate ordering, but not whether a returned answer set covers a
-recorded correct entity at a stated rate. That distinction matters when a
-forecast is passed to a human analyst or a downstream decision rule: a
-high-ranking model may still produce unreliable confidence scores, while a
-nominally reliable set may be too large to use.
+Temporal knowledge graphs (TKGs) encode time-stamped relations among entities.
+They support forecasts of future interactions and events in settings where the
+cost of overlooking a plausible answer may exceed the cost of inspecting a
+short list. Most TKG models are nevertheless evaluated with filtered mean
+reciprocal rank (MRR) and Hits@\(K\)
+\cite{garciaduran2018sequence,li2021regcn,li2022tirgn,cai2023survey}. These
+metrics assess ordering. They do not answer a different operational question:
+does a set returned with nominal coverage \(1-\alpha\) actually contain the
+recorded correct entity at that rate?
 
-Conformal prediction converts model scores into prediction sets without
-requiring a probabilistic model of the labels \cite{vovk2005algorithmic,angelopoulos2023gentle}.
-KGCP applies this idea to static knowledge graph embeddings, and CondKGCP studies
-predicate-conditional answer sets \cite{zhu2025kgcp,zhu2025condkgcp}. Their
-results establish useful static baselines, but temporal forecasting presents a
-different information structure: calibration data precede test queries, the
-score distribution can change with time, and the labels from a test timestamp
-must not be used before all queries at that timestamp have been predicted.
-Methods for covariate shift, adaptive conformal inference, and
-non-exchangeable data address related settings, but require assumptions or
-update rules that should not be silently transferred to TKGs
-\cite{tibshirani2019covariate,gibbs2021adaptive,barber2023beyond,farinhas2024nexcrc,wang2025ncpnet}.
+Conformal prediction turns model scores into prediction sets without requiring
+a parametric label-probability model
+\cite{vovk2005algorithmic,angelopoulos2023gentle}. KGCP applies split conformal
+prediction to static knowledge graph embeddings, and CondKGCP studies
+predicate-conditional answer sets \cite{zhu2025kgcp,zhu2025condkgcp}. Temporal
+forecasting changes the information structure. Calibration precedes the test
+stream, score distributions may evolve, and a label observed at timestamp
+\(t\) must not influence another prediction made for the same timestamp. A
+fixed threshold may therefore cease to be reliable even when the ranking model
+itself is unchanged.
 
-This paper asks a focused empirical question: \emph{does calibration on recent,
-strictly past TKG scores improve answer-set reliability after a temporal split,
-and what does that improvement cost?} We answer it with a timestamp-batched
-prequential protocol. A frozen scorer predicts every subject and object query
-at time \(t\); only after the complete batch is recorded may its observed labels
-enter the calibration history. The study compares static and rolling margin
-calibration with the NegScore, Minmax, and Softmax nonconformity transformations
-reported by KGCP. These are matched-protocol score-transform baselines, not an
-exact reproduction of the KGCP authors' complete training pipeline.
+This paper asks: \emph{can an answer-set threshold updated only from strictly
+past timestamp batches repair temporal reliability, and what is paid in set
+size and subgroup behavior?} We answer with a timestamp-batched prequential
+protocol. A frozen scorer first emits every subject- and object-side prediction
+at time \(t\). Only then are labels from that batch released to the calibration
+history. Static, expanding, and recent rolling histories are crossed with four
+nonconformity scores so that the effect of history is not confused with the
+effect of score geometry.
 
-The evaluation was expanded in response to three threats to validity. First,
-ICEWS14 is supplemented with the longer ICEWS05-15 event graph. Second,
-temporal DistMult is supplemented with a continuous-time complex-valued scorer;
-the latter follows a ComplEx-style factorization but is not the official
-TComplEx optimizer \cite{yang2015distmult,lacroix2020tcomplex}. Third, filtered
-and uniform training negatives are compared in paired sensitivity conditions.
-The resulting matrix contains 90 completed seed--deletion conditions, 286,480
-timestamp summaries, and 28.6 million query-level records.
+The evidence is broader than a single-model case study but remains deliberately
+controlled. The main matrix covers ICEWS14 and ICEWS05-15, temporal DistMult
+and a matched-protocol continuous-time complex scorer, five seeds, and deletion
+of up to 30\% of training facts. Paired sensitivity runs compare filtered and
+uniform training negatives. A follow-up factorial analysis reuses verified
+checkpoints and evaluates four scores under three history policies. In total,
+the primary matrix contains 90 completed seed--deletion conditions, while the
+factorial analysis contains 20 dataset--scorer--seed cases and 131,550
+timestamp--method rows.
 
-The main findings are deliberately bounded. Rolling margin calibration restores
-near-nominal aggregate coverage in all four dataset--scorer combinations, but
-it does not consistently improve on KGCP Minmax or NegScore on ICEWS14 and it
-returns much larger sets. Multi-answer queries remain substantially less likely
-than single-answer queries to have every recorded answer covered. Moreover,
-controlled deletion of training facts does not significantly worsen static
-coverage, and filtered-negative effects are mostly inconclusive. The contribution
-is therefore a reliability diagnostic and leakage-controlled evaluation, not a
-new distribution-free coverage theorem or a claim of universal superiority.
+Three findings shape the contribution. First, a recent-history margin threshold
+repairs the severe undercoverage of a fixed margin threshold in all four
+dataset--scorer cases, but requires much larger sets. Second, the best
+reliability--utility trade-off is not stable across score functions or datasets:
+Minmax is markedly smaller on ICEWS14, whereas Softmax becomes inefficiently
+conservative under rolling updates. Third, marginal label coverage conceals a
+large multi-answer deficit, and the most direct query-max calibration attempt
+does not correct it. The contribution is a leakage-controlled diagnostic, a
+factorized empirical account of its failure modes, and an explicit boundary on
+what temporal conformal claims the evidence can support. It is not a new
+distribution-free theorem for arbitrary temporal drift.
 
 \section{Related Work}
 \label{sec:related}
 
 \textbf{Temporal knowledge graph forecasting.}
-TKG completion methods range from temporal sequence encoders and tensor
-factorizations to recurrent graph networks
+TKG completion methods include temporal sequence encoders, tensor
+factorizations, and recurrent graph networks
 \cite{garciaduran2018sequence,lacroix2020tcomplex,li2021regcn,li2022tirgn}.
-Simple history-based methods can remain competitive, which makes careful
-protocol design as important as model complexity \cite{gastinger2024repeat,gastinger2024tgb2}.
-Our calibration layer consumes a frozen all-entity score vector and does not
-alter candidate ordering. It is therefore evaluated across two scorer families
-rather than presented as a new forecasting backbone.
+Simple historical baselines can remain competitive, which makes split design
+and temporal information control central to evaluation
+\cite{gastinger2024repeat,gastinger2024tgb2}. Our calibration layer consumes a
+frozen all-entity score vector and does not change candidate ranking. The two
+scorer families used below are therefore controlled protocol variants, not new
+forecasting architectures.
 
-\textbf{Calibration and conformal answer sets.}
-Post-hoc probability calibration has been studied for neural classifiers and
-knowledge graph embeddings \cite{guo2017calibration,safavi2020calibration}.
-KGCP introduced conformal answer sets for knowledge graph link prediction using
-NegScore, query-wise Minmax, and Softmax score transformations
-\cite{zhu2025kgcp}. CondKGCP extended this direction toward
-predicate-conditional behavior \cite{zhu2025condkgcp}. APS and RAPS provide
-ranked probability-mass prediction sets for classifiers
-\cite{angelopoulos2021raps}. We use KGCP's three score transformations as
-static baselines under the same split and scorer as our margin rules. RAPS is
-retained only as a secondary, validation-selected utility diagnostic because
-temporal ordering invalidates an automatic transfer of its exchangeable-data
-guarantee.
+\textbf{Conformal prediction for graph outputs.}
+Probability calibration has been studied for neural classifiers and knowledge
+graph embeddings \cite{guo2017calibration,safavi2020calibration}. KGCP constructs
+answer sets for link prediction with NegScore, query-wise Minmax, and Softmax
+transformations \cite{zhu2025kgcp}; CondKGCP moves from marginal toward
+predicate-conditional behavior \cite{zhu2025condkgcp}. APS and RAPS use ranked
+probability mass to trade coverage against set size in multiclass prediction
+\cite{angelopoulos2021raps}. These studies make score design a first-order
+experimental factor rather than a cosmetic implementation choice.
 
-\textbf{Non-exchangeable calibration.}
-Weighted conformal prediction, Adaptive Conformal Inference, and subsequent
-non-exchangeable analyses show how coverage can be studied under specific forms
-of shift or online feedback
+CFEP recently addressed conformal event-type prediction on temporal knowledge
+graphs with score diffusion and learned quantile weights \cite{hu2026cfep}.
+Our estimand and protocol differ. We study entity answer sets for link
+forecasting, freeze the scorer, and isolate how past-only history and score
+geometry affect calibration. The aim is diagnostic: the analysis reports where
+a simple temporal update works, what it costs, and where it fails.
+
+\textbf{Calibration under non-exchangeability.}
+Weighted conformal prediction, Adaptive Conformal Inference, and analyses of
+non-exchangeable data provide guarantees under specified shift or online
+feedback conditions
 \cite{tibshirani2019covariate,gibbs2021adaptive,barber2023beyond,farinhas2024nexcrc}.
-NCPNET addresses non-exchangeable temporal graph neural networks
+NCPNET studies non-exchangeable temporal graph neural networks
 \cite{wang2025ncpnet}. Our rolling rule is intentionally simpler: it estimates
-an empirical quantile from the most recent revealed scores. No likelihood-ratio
-weights or test-point mass are used, so we make no finite-sample guarantee under
-arbitrary drift.
+an empirical quantile from the most recent revealed scores. Because it uses no
+likelihood-ratio weights and assumes no bounded drift process, exchangeable
+coverage cannot simply be transferred to the test stream.
 
-\section{Problem and Prequential Protocol}
+\section{Problem, Calibration, and Guarantee Boundary}
 \label{sec:method}
 
-\subsection{Queries, Answer Sets, and Metrics}
+\subsection{Temporal Queries and Reliability Targets}
 
-Let \(\mathcal{E}\) and \(\mathcal{R}\) denote the closed entity and relation
-vocabularies. A TKG contains quadruples \((s,r,o,t)\). An object query is
-\(x=(s,r,?,t)\), where ``\(?\)'' marks the entity slot to be predicted; it is
-not missing manuscript text. Subject prediction is represented as
-\((o,r^{-1},?,t)\). For query \(x\), let \(Y_t(x)\subseteq\mathcal{E}\) be all
-recorded answers at timestamp \(t\), and let \(C_t(x)\) be the prediction set.
+Let \(\mathcal{E}\) and \(\mathcal{R}\) be closed entity and relation
+vocabularies. A TKG contains quadruples \((s,r,o,t)\). We write an object query
+as \(x=(s,r,\square,t)\), where \(\square\) denotes the entity slot to be
+predicted, and represent subject prediction by \((o,r^{-1},\square,t)\). For a
+query \(x\), let \(A_t(x)\subseteq\mathcal{E}\) be all recorded answers at
+timestamp \(t\), and let \(C_t(x)\) be the predicted answer set.
 
-The primary reliability metric is observed-label coverage,
+The primary reliability estimand is observed-label coverage,
 \[
   \widehat{\cov}_{\mathrm{label}}
   =\frac{1}{N}\sum_{(x,y)}\mathbb{1}\{y\in C_t(x)\}.
 \]
-This label-marginal quantity differs from full-set query coverage,
-\(\mathbb{1}\{Y_t(x)\subseteq C_t(x)\}\). We report both, together with mean
-set size and filtered MRR. For multi-answer queries, partial answer recall is
-\(|Y_t(x)\cap C_t(x)|/|Y_t(x)|\). Coverage always refers to recorded benchmark
-labels, not to all events that may be true in the world.
+It differs from full-set query coverage,
+\(\mathbb{1}\{A_t(x)\subseteq C_t(x)\}\). We report both, together with mean
+set size, filtered MRR, and partial answer recall
+\(|A_t(x)\cap C_t(x)|/|A_t(x)|\). Each quantity refers to labels recorded in
+the benchmark, not to every event that might be true outside the data.
 
-\subsection{Static and Rolling Calibration}
+\subsection{Scores and History Policies}
 
-Let \(f_\theta(x,y)\) be a score from a frozen TKG model. Margin nonconformity is
+Let \(f_\theta(x,y)\) be the score assigned by a frozen TKG model. Margin
+nonconformity is
 \[
-  a_{\mathrm{margin}}(x,y)=\max_{z\in\mathcal{E}} f_\theta(x,z)-f_\theta(x,y),
-  \qquad
-  C_q(x)=\{y:a_{\mathrm{margin}}(x,y)\le q\}.
+ a_{\mathrm{margin}}(x,y)=\max_{z\in\mathcal{E}}f_\theta(x,z)-f_\theta(x,y),
+ \qquad C_q(x)=\{y:a(x,y)\le q\}.
+ \tag{1}\label{eq:margin}
 \]
-For calibration scores \(a_1,\ldots,a_n\) and target \(1-\alpha\), the
-finite-sample threshold is the order statistic with index
-\(\min\{n,\lceil(n+1)(1-\alpha)\rceil\}\). Static margin estimates this
-threshold once from the final initial-calibration interval. Rolling margin
-re-estimates it at each test timestamp from the most recent \(W=1000\) scores
-that were revealed strictly before that timestamp.
+For calibration scores \(a_1,\ldots,a_n\) and target \(1-\alpha\), let
+\[
+ k=\min\{n,\lceil(n+1)(1-\alpha)\rceil\},\qquad q=a_{(k)}.
+ \tag{2}\label{eq:quantile}
+\]
+Static history estimates \(q\) once from the final initial-calibration interval.
+Expanding history uses every score revealed before the current timestamp.
+Rolling history uses the most recent \(W=1000\) revealed scores.
 
-The KGCP baselines use the same frozen score tensors and the same static
-calibration interval. For candidate score vector \(f\), their nonconformity
-scores are
+To separate the score from the history, the factorial study also evaluates the
+three transformations used by KGCP. For score vector \(f\),
 \[
 \begin{aligned}
  a_{\mathrm{Neg}}(y)&=-f_y,\\
  a_{\mathrm{Minmax}}(y)&=-\frac{f_y-\min_z f_z}{\max_z f_z-\min_z f_z},\\
  a_{\mathrm{Softmax}}(y)&=1-\frac{\exp(f_y/T)}{\sum_z\exp(f_z/T)},
 \end{aligned}
+\tag{3}\label{eq:scores}
 \]
-with zero-range Minmax vectors mapped to zero and \(T=1\). We use the published
-score definitions but retrain neither the original KGCP models nor their exact
-optimizer. Accordingly, the comparisons isolate score transformation and
-temporal updating under one protocol.
+where zero-range Minmax vectors map to zero and \(T=1\). We reproduce these
+published score definitions under our common split and scorers; we do not claim
+to reproduce the complete KGCP training pipeline.
 
-At test timestamp \(t\), every query is scored and every set is stored before
-any label from \(t\) is revealed. The complete batch is then appended to the
-rolling pool. This batch boundary prevents within-timestamp leakage.
+At timestamp \(t\), all query scores, thresholds, and sets are stored before
+any label from \(t\) is released. The entire batch is then appended to the
+expanding and rolling histories. This ordering prevents within-timestamp
+leakage.
 
-\subsection{What the Empirical Threshold Does and Does Not Guarantee}
+\subsection{Coverage Bounds and Set Geometry}
 
-Condition on the frozen scorer and all information available before timestamp
-\(t\). Let \(F_t\) be the CDF of the current label's nonconformity score. Let
-\(H_{t,w}\) be the population mixture represented by a weighted calibration
-pool and \(\widehat H_{t,w}\) its empirical CDF. Define
+The first theorem states the familiar exchangeable benchmark against which the
+temporal experiment should be read. It is included to make clear which part of
+the usual conformal argument is lost after a chronological split
+\cite{vovk2005algorithmic,angelopoulos2023gentle}.
+
+\noindent\textbf{Theorem 1 (exchangeable split-conformal reference).}\quad
+Condition on a frozen scorer. Suppose \(a_1,\ldots,a_n,a_{n+1}\) are
+exchangeable and \(\alpha\ge 1/(n+1)\). With \(q\) from
+Equation~\eqref{eq:quantile},
 \[
-  \delta_t=\sup_u|F_t(u)-H_{t,w}(u)|,\qquad
-  \epsilon_t=\sup_u|\widehat H_{t,w}(u)-H_{t,w}(u)|,
+ \Pr\{a_{n+1}\le q\}\ge 1-\alpha.
+ \tag{4}\label{eq:exchangeable}
 \]
-and let \(\eta_t\) be the largest total empirical weight assigned to scores
-tied at one value.
-
-\noindent\textbf{Proposition 1 (set geometry).}\quad
-For nonnegative \(q_1\le q_2\), \(C_{q_1}(x)\subseteq C_{q_2}(x)\) and
-\(C_{q_1}(x)\neq\varnothing\). Moreover,
-\(Y_t\in C_{q_t}(X_t)\) if and only if the observed-label nonconformity score is
-at most \(q_t\).
+If the scores are almost surely distinct, the coverage is at most
+\(1-\alpha+1/(n+1)\).
 
 \emph{Proof.}
-The set is a nonconformity sublevel set and therefore grows with the threshold.
-The top-scoring entity has margin zero. The final statement follows directly
-from the definition of \(C_q\). \hfill\(\square\)
+Exchangeability makes the rank of \(a_{n+1}\) among the \(n+1\) scores uniform.
+The event that this rank does not exceed
+\(\lceil(n+1)(1-\alpha)\rceil\) has probability at least \(1-\alpha\).
+Using the calibration order statistic can only include tied test scores; without
+ties, the next attainable rank contributes at most \(1/(n+1)\). \hfill\(\square\)
 
-\noindent\textbf{Proposition 2 (deterministic coverage decomposition).}\quad
-For the inclusive empirical threshold at level \(1-\alpha\),
+Temporal ordering need not satisfy the premise of Theorem~1. The next result
+does not restore that guarantee; it decomposes the error of an empirical
+threshold. Condition on all information available before time \(t\). Let
+\(F_t\) be the CDF of the current observed-label score, \(\widehat H_t\) the
+empirical CDF of the selected past-score pool, and \(H_t\) a reference CDF for
+that pool. Define
 \[
-  1-\alpha-\delta_t-\epsilon_t
-  \le F_t(q_t)\le
-  1-\alpha+\delta_t+\epsilon_t+\eta_t,
-  \tag{1}\label{eq:coverage-decomposition}
+ \delta_t=\sup_u|F_t(u)-H_t(u)|,\qquad
+ \epsilon_t=\sup_u|\widehat H_t(u)-H_t(u)|.
 \]
-with either side clipped to \([0,1]\).
+Let \(\eta_t=\widehat H_t(q_t)-\widehat H_t(q_t^-)\) be the empirical mass tied
+at the selected threshold, and
+\(\rho_{n,\alpha}=\max\{0,(k-1)/n-(1-\alpha)\}\).
+
+\noindent\textbf{Theorem 2 (deterministic temporal-mismatch decomposition).}\quad
+For the inclusive threshold in Equation~\eqref{eq:quantile},
+\[
+ 1-\alpha-\delta_t-\epsilon_t
+ \le F_t(q_t)\le
+ 1-\alpha+\rho_{n,\alpha}+\eta_t+\delta_t+\epsilon_t,
+ \tag{5}\label{eq:decomposition}
+\]
+with both bounds clipped to \([0,1]\).
 
 \emph{Proof.}
-The empirical CDF is at least \(1-\alpha\) at the inclusive quantile, so the
-population history CDF is at least \(1-\alpha-\epsilon_t\), and the current CDF
-is at least a further \(\delta_t\) below. Immediately before the quantile, the
-empirical CDF is below \(1-\alpha\); its jump is at most \(\eta_t\). Applying
-the same two sup-norm deviations gives the upper bound. \hfill\(\square\)
+By construction, \(\widehat H_t(q_t)\ge k/n\ge1-\alpha\). Two applications of
+the sup-norm bounds yield the lower inequality. Immediately before \(q_t\), at
+most \(k-1\) empirical observations are strictly smaller, so
+\(\widehat H_t(q_t)\le(k-1)/n+\eta_t\). Applying the same two deviations gives
+the upper inequality. \hfill\(\square\)
 
-Equation~\eqref{eq:coverage-decomposition} is a decomposition, not a new
-distribution-free guarantee. A shorter history may reduce temporal mismatch
-\(\delta_t\), while increasing estimation error or tie mass. The experiments
-measure the resulting reliability--utility trade-off rather than assuming that
-recent history must be better.
+The decomposition identifies a trade-off. A shorter history may reduce temporal
+mismatch \(\delta_t\), yet increase empirical error \(\epsilon_t\) or the effect
+of atoms \(\eta_t\). These terms are not estimated as a new guarantee; the
+experiments measure their observable consequence through coverage and set size.
 
-\section{Experimental Design}
+\noindent\textbf{Proposition 1 (set nesting and multi-answer criterion).}\quad
+For any nonconformity score, \(q_1\le q_2\) implies
+\(C_{q_1}(x)\subseteq C_{q_2}(x)\). For margin nonconformity and \(q\ge0\), the
+set is nonempty. Moreover,
+\[
+ A_t(x)\subseteq C_q(x)
+ \quad\Longleftrightarrow\quad
+ \max_{y\in A_t(x)}a(x,y)\le q.
+ \tag{6}\label{eq:querymax}
+\]
+
+\emph{Proof.}
+Prediction sets are nonconformity sublevel sets and therefore nested. Under
+Equation~\eqref{eq:margin}, a top-scoring entity has score zero. The final
+equivalence follows because every recorded answer is included exactly when its
+largest nonconformity score does not exceed the threshold. \hfill\(\square\)
+
+Equation~\eqref{eq:querymax} motivates a query-max calibration objective. It
+does not imply that its empirical threshold will dominate a label-level
+threshold: changing from labels to unique queries changes both the sample size
+and the order statistic. We test that distinction directly.
+
+\section{Experiments and Results}
 \label{sec:experiments}
 
-\subsection{Data, Scorers, and Conditions}
+\subsection{Study Design}
 
-ICEWS14 and ICEWS05-15 are event knowledge graph benchmarks derived from the
-ICEWS coded event data \cite{boschee2015icews}. Table~\ref{tab:data} reports the
-normalized graph sizes. Unique timestamps are sorted: the earliest 60\% train
-the scorer, the next 20\% provide four disjoint validation and calibration
-roles, and the final 20\% form the test stream. The middle interval is divided
-chronologically into 25\% scorer validation, 30\% calibrator tuning, 15\%
-selector validation, and 30\% final initial calibration.
+The experiments answer four questions. \textbf{RQ1} asks whether recent-history
+calibration repairs static undercoverage across datasets and scorers.
+\textbf{RQ2} separates history policy from score geometry and measures their
+utility cost. \textbf{RQ3} tests whether training-fact deletion or filtered
+negative sampling explains the main effect. \textbf{RQ4} measures multi-answer
+reliability and tests the query-max objective from Proposition~1.
+
+ICEWS14 and ICEWS05-15 are event graphs derived from the ICEWS coded event data
+\cite{boschee2015icews}. Table~\ref{tab:data} reports the normalized graph
+sizes. Unique timestamps are sorted: the earliest 60\% train the scorer, the
+next 20\% provide disjoint validation and calibration roles, and the final
+20\% form the test stream. The middle interval is divided chronologically into
+25\% scorer validation, 30\% calibrator tuning, 15\% selector validation, and
+30\% final initial calibration.
 
 \begin{table}[t]
 \centering
-\caption{Normalized dataset statistics. Relations exclude the inverse copies
-added internally for subject prediction.\label{tab:data}}
+\caption{Normalized dataset statistics. Relations exclude inverse copies used
+internally for subject prediction.\label{tab:data}}
 \begin{tabular}{lrrrr}
 \toprule
 Dataset & Entities & Relations & Facts & Timestamps\\
@@ -262,188 +311,224 @@ ICEWS05-15 & 10,488 & 251 & 461,329 & 4,017\\
 \end{table}
 
 Temporal DistMult uses 256-dimensional real embeddings. The second scorer uses
-128-dimensional complex embeddings and a shared continuous time map formed from
+128-dimensional complex embeddings and a shared continuous-time map formed by
 constant, linear, quadratic, sine, and cosine features. It is a
-matched-protocol ComplEx-style alternative, not an exact implementation of the
-discrete-time TComplEx training procedure. Both scorers use the same pairwise
-softplus objective, Adam, learning rate \(10^{-3}\), weight decay \(10^{-6}\),
-batch size 1024, 128 negatives, at most 200 epochs, and validation-based early
-stopping.
+matched-protocol ComplEx-style alternative, not the official TComplEx or
+TNTComplEx optimizer. Both scorers use the same pairwise softplus objective,
+Adam, learning rate \(10^{-3}\), weight decay \(10^{-6}\), batch size 1024,
+128 negatives, at most 200 epochs, and validation-based early stopping.
 
-The primary matrix uses filtered training negatives and five seeds
-\(\{17,29,43,59,71\}\). ICEWS14 is evaluated with both scorers at deletion
-rates \(\{0,0.1,0.2,0.3\}\); ICEWS05-15 uses all four rates for DistMult and
-rates \(\{0,0.3\}\) for the complex scorer. Deletion affects training facts
-only. It is seeded and uniform subject to retaining each entity's earliest
-training occurrence when deletion would otherwise remove every occurrence.
-Uniform-negative sensitivity is evaluated at rates 0 and 0.3 for ICEWS05-15
-DistMult and ICEWS14 continuous ComplEx. Filtered negatives exclude positives
-retained in the training graph; they do not use future facts.
+The primary matrix uses filtered training negatives and seeds
+\(\{17,29,43,59,71\}\). ICEWS14 uses both scorers at deletion rates
+\(\{0,0.1,0.2,0.3\}\). ICEWS05-15 uses all four rates for DistMult and rates
+\(\{0,0.3\}\) for the continuous complex scorer. Deletion affects training
+facts only and retains an entity's earliest occurrence if uniform deletion
+would otherwise remove all of its training occurrences. Paired
+uniform-negative sensitivity is run for ICEWS05-15 DistMult and ICEWS14
+continuous complex at deletion rates 0 and 0.3. Filtered negatives exclude
+positives retained in the training graph and do not consult future facts.
 
-\subsection{Inference and Reproducibility}
+The factorial follow-up fixes deletion at 0.3, uses filtered negatives, and
+reuses the verified checkpoint for each of the four dataset--scorer cases and
+five seeds. It crosses the four scores in Equation~\eqref{eq:scores} with
+static, expanding, and rolling histories. It also evaluates query-max margin
+under the same three histories. No test result selects a score or policy.
 
-The target coverage is 0.90. Primary uncertainty intervals use 20,000
-equal-seed circular moving-block bootstrap replicates with a seven-timestamp
-block; lengths 3, 14, and 21 are sensitivity checks. Paired contrasts reuse the
-same seed and timestamp blocks. The analysis reports coverage, mean set size,
-filtered MRR, full-set query coverage, and partial answer recall. The complete
-code, resolved configurations, paper data, figure-generation scripts, checksums,
-and release audit are available at
-\url{https://github.com/xywang815/riskcal-tkg-w}. Raw ICEWS data are obtained
-from \url{https://doi.org/10.7910/DVN/28075} and the public benchmark archive
+The target coverage is 0.90. Primary intervals use 20,000 equal-seed circular
+moving-block bootstrap replicates with seven-timestamp blocks; block lengths 3,
+14, and 21 test sensitivity to the dependence scale. Contrasts are paired by
+seed and timestamp. Code, resolved configurations, derived result tables,
+figure scripts, and checksums are available at
+\url{https://github.com/xywang815/riskcal-tkg-w}. Raw ICEWS data are available
+from \url{https://doi.org/10.7910/DVN/28075} and the public benchmark source
 documented in the repository.
 
-OpenAI Codex was used to assist code development, experiment orchestration,
-language editing, and document formatting. The author reviewed the source,
-verified the checksum-bound outputs, and takes responsibility for the analyses,
-figures, and manuscript.
+\subsection{RQ1: Recent History Repairs Static Margin Undercoverage}
 
-\section{Results}
-\label{sec:results}
-
-All 90 planned seed--deletion conditions completed. The evidence contains
-286,480 timestamp rows and 28,626,600 query-label rows, including 4,858,050
-rows from multi-answer queries. No incomplete condition or pilot result is used
-below.
-
-\subsection{Coverage Generalizes, but the Best Static Baseline Depends on the Dataset}
-
-Figure~\ref{fig:generalization} shows observed-label coverage. At 30\% deletion,
-rolling margin obtains 0.8996 and 0.8988 on ICEWS14 with DistMult and continuous
-ComplEx, and 0.9002 with both scorers on ICEWS05-15. Relative to static margin,
-the corresponding gains are 0.0798 (95\% CI [0.0621, 0.0999]), 0.0802
-([0.0612, 0.1012]), 0.1011 ([0.0921, 0.1102]), and 0.1025
-([0.0937, 0.1111]). KGCP Softmax behaves similarly to static margin and also
-under-covers in all four settings.
+Figure~\ref{fig:generalization} first establishes the cross-dataset pattern.
+At 30\% deletion, rolling margin coverage is 0.8996 and 0.8988 on ICEWS14 with
+DistMult and the continuous complex scorer, and 0.9002 for both scorers on
+ICEWS05-15. The paired rolling-minus-static gains are 0.0798 (95\% CI
+[0.0621, 0.1006]), 0.0802 ([0.0612, 0.1014]), 0.1011
+([0.0921, 0.1102]), and 0.1025 ([0.0938, 0.1111]), respectively.
+The corresponding filtered MRR values are 0.3103, 0.3129, 0.3269, and 0.3295;
+calibration changes answer-set membership but leaves this ranking unchanged.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/expansion/expansion_generalization.pdf}
 \caption{Observed-label coverage across deletion rates. Points are means over
-five seeds and error bars are one seed standard deviation; the dashed line is
-the 0.90 target. ICEWS05-15 continuous ComplEx was evaluated at 0 and 30\%
-deletion. All methods use the same scorer within a panel.\label{fig:generalization}}
+five seeds, error bars show one seed standard deviation, and the dashed line is
+the 0.90 target. ICEWS05-15 continuous complex is evaluated at deletion rates
+0 and 0.3. Methods share the same scorer within each panel.\label{fig:generalization}}
 \end{figure}
 
-The comparison with stronger KGCP transformations is heterogeneous. On
-ICEWS05-15, rolling margin exceeds KGCP Minmax by 0.0436 ([0.0387, 0.0486])
-with DistMult and 0.0471 ([0.0418, 0.0524]) with continuous ComplEx; its gains
-over KGCP NegScore are 0.0673 and 0.0678. On ICEWS14, however, the
-rolling-minus-Minmax intervals are [-0.0074, 0.0042] and [-0.0072, 0.0058],
-and the NegScore intervals also cross zero. KGCP Minmax and NegScore already
-reach approximately nominal coverage there. Rolling calibration is therefore a
-robust temporal repair relative to the two under-covering static rules, not a
-uniform improvement over all KGCP scores.
+The repair is not free. In the factorized follow-up, rolling margin increases
+mean set size over static margin by 1175 entities on ICEWS14 DistMult (95\% CI
+[959, 1416]), 1158 on ICEWS14 continuous complex ([947, 1382]), 2026 on
+ICEWS05-15 DistMult ([1867, 2183]), and 2038 on ICEWS05-15 continuous complex
+([1888, 2182]). The absolute target-error reduction is positive for every case
+and every tested block length, as is the set-size increase. The reliable part of
+the conclusion is therefore a paired movement toward the target accompanied by
+a substantial loss of efficiency.
 
-\subsection{Near-Nominal Coverage Requires Large Sets}
+\subsection{RQ2: History and Score Geometry Interact}
 
-At 30\% deletion, rolling mean set sizes are 3,870.6 and 3,818.0 entities on
-ICEWS14 and 4,307.2 and 4,260.1 on ICEWS05-15 for DistMult and continuous
-ComplEx, respectively. These sets are 1.63--2.22 times larger than KGCP Minmax
-sets and 1.41--1.85 times larger than static-margin sets. On ICEWS14, KGCP
-Minmax reaches nominal coverage with substantially smaller sets than rolling
-margin. On ICEWS05-15, rolling margin is more reliable than KGCP Minmax but pays
-for that gain with more than twice the mean set size. These results define a
-reliability--utility frontier rather than a single winning method.
+Figure~\ref{fig:factorial} separates the two components that the initial study
+coupled. Margin and Softmax change sharply as the history moves from static to
+expanding to rolling. NegScore and Minmax are comparatively stable on ICEWS14,
+where their static thresholds already lie near 0.90. On ICEWS05-15, all four
+scores respond to the history choice, but they occupy different regions of the
+coverage--size plane.
 
-\subsection{Deletion and Negative Sampling Do Not Explain the Main Effect}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/followup/followup_factorial.pdf}
+\caption{Factorial ablation of nonconformity score and calibration history at
+30\% deletion. Each colored path connects static (square), expanding
+(triangle), and rolling-1000 (circle) histories for one score. The dashed line
+is the 0.90 target. Values are equal-seed means; paired uncertainty is reported
+in the text.\label{fig:factorial}}
+\end{figure}
 
-Figure~\ref{fig:diagnostics} separates method contrasts from two stress tests.
-For 30\% minus 0\% deletion, every static-margin and rolling-margin coverage
-interval includes zero. Static changes range from -0.0024 to -0.0004, and
-rolling changes range from 0.0000 to 0.0005. The experiment therefore does not
-support the claim that deleted training facts cause static calibration failure.
-Deletion remains a controlled scorer stress, while temporal mismatch is the
-more defensible motivation.
+Within rolling history, Minmax changes ICEWS14 coverage by only 0.0001 and
+0.0005 relative to margin, with both 95\% intervals crossing zero, while
+reducing mean set size by 1773 and 1650 entities. On ICEWS05-15 it reduces size
+by 1187 and 1091 entities, but its coverage changes of -0.0014 and -0.0011 are
+small and sensitive to block length. NegScore shows the same dataset dependence:
+it is smaller without a resolved coverage change on ICEWS14, but slightly less
+reliable and not consistently smaller on ICEWS05-15.
 
-Filtered-minus-uniform rolling effects also include zero in all four paired
+Softmax illustrates why coverage alone is insufficient. Under rolling history,
+it raises coverage over margin by 0.069--0.085, yet adds 2081--4991 entities.
+The resulting coverage of 0.9683--0.9854 is overconservative and leaves little
+screening value on the larger graph. No score function dominates across all
+cases; score geometry and temporal history must be assessed jointly.
+
+A separate ICEWS14 DistMult shortlist diagnostic reached the same caution from
+a different construction. A validation-selected RAPS-style rolling rule used
+softmax temperature \(T=1\), selection tolerance 0.02, and a fixed 21-candidate
+grid comprising APS plus
+\(k\in\{50,100,250,500,1000\}\) and
+\(\lambda\in\{10^{-4},5\times10^{-4},10^{-3},2\times10^{-3}\}\).
+All 20 seed--deletion conditions selected \(k=50\) and
+\(\lambda=10^{-4}\). At 30\% deletion it reduced mean set size from 4069.4 for
+rolling margin to 3319.0 while changing observed-label coverage from 0.8998 to
+0.8987; full-set query coverage fell from 0.9020 to 0.8874. This is an
+efficiency diagnostic under one scorer, not evidence of a general improvement.
+
+\subsection{RQ3: The Tested Data Interventions Do Not Explain the Gap}
+
+Figure~\ref{fig:diagnostics} distinguishes the history effect from two proposed
+mechanisms. For 30\% minus 0\% deletion, every static-margin and rolling-margin
+coverage interval crosses zero. Static changes range from -0.0024 to -0.0004,
+and rolling changes range from 0.0000 to 0.0005. Training-fact deletion is thus
+a scorer stress test, but the experiment does not support it as the cause of
+static calibration failure.
+
+Filtered-minus-uniform rolling effects also cross zero in all four paired
 conditions. A small positive static-margin effect appears only for ICEWS05-15
-DistMult without deletion (0.0020 [0.0005, 0.0038]); the other static intervals
-cross zero. The main coverage conclusions are not driven by the tested negative
-sampling choice.
+DistMult without deletion (0.0020 [0.0005, 0.0038]); the remaining static
+intervals are inconclusive. The main history result is not attributable to the
+tested negative-sampling choice.
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/expansion/expansion_reviewer_diagnostics.pdf}
-\caption{Paired timestamp-block bootstrap diagnostics (20,000 replicates,
-seven-timestamp blocks). (\textbf{a}) Rolling-minus-static coverage at 30\%
-deletion. (\textbf{b}) Coverage change caused by 30\% training-fact deletion.
-(\textbf{c}) Coverage change from filtered rather than uniform training
-negatives. Intervals crossing zero are inconclusive.\label{fig:diagnostics}}
+\includegraphics[width=0.97\textwidth]{figures/expansion/expansion_reviewer_diagnostics.pdf}
+\caption{Paired timestamp-block bootstrap diagnostics (20,000 replicates;
+seven-timestamp blocks). (\textbf{a}) Rolling-minus-static-baseline coverage at
+30\% deletion. (\textbf{b}) Coverage change from deleting 30\% rather than 0\%
+of training facts. (\textbf{c}) Coverage change from filtered rather than
+uniform training negatives. Intervals crossing zero are inconclusive.
+\label{fig:diagnostics}}
 \end{figure}
 
-\subsection{Multi-Answer Queries Remain a Failure Mode}
+\subsection{RQ4: Label Coverage Conceals Multi-Answer Failure}
 
-Label-marginal coverage can hide whether a set contains every answer to a query.
-At 30\% deletion, rolling full-set coverage for multi-answer queries is 0.2792
-below single-answer coverage on ICEWS14 DistMult, with a 95\% interval of
-[-0.2992, -0.2600]. The gaps are -0.3054 on ICEWS14 continuous ComplEx,
--0.2174 on ICEWS05-15 DistMult, and -0.2294 on ICEWS05-15 continuous ComplEx
-(Figure~\ref{fig:multi}). For example, ICEWS14 DistMult rolling coverage is
-0.6532 for multi-answer queries and 0.9305 for single-answer queries. Rolling
-calibration narrows the gap relative to static margin and KGCP Softmax, but does
-not remove it.
+In the factorial follow-up, under rolling label-margin calibration,
+multi-answer full-set coverage is lower than single-answer coverage in every
+case: the mean gaps are -0.2773 and
+-0.3015 on ICEWS14, and -0.2059 and -0.2137 on ICEWS05-15, for DistMult and
+continuous complex respectively. Marginal label coverage near 0.90 therefore
+does not imply that a set contains all recorded answers to a query.
 
-\begin{figure}[H]
+Proposition~1 suggests calibrating the maximum nonconformity over each recorded
+answer set. Empirically, that direct query-max rule does not solve the problem
+(Figure~\ref{fig:queryobjective}). Relative to label-level rolling margin, its
+full-set coverage changes by -0.0081 (95\% CI [-0.0107, -0.0058]) and -0.0070
+([-0.0093, -0.0049]) on ICEWS14. The ICEWS05-15 changes are -0.0011
+([-0.0022, 0.0001]) and -0.0014 ([-0.0024, -0.0003]). Sets shrink by 39--141
+entities, but the multi-answer gap becomes more negative. Reducing the number
+of calibration units from labels to unique queries changes the empirical
+quantile enough to offset the apparently conservative maximum score.
+
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{figures/expansion/expansion_multi_answer.pdf}
-\caption{Full-set coverage for multi-answer queries minus full-set coverage for
-single-answer queries at 30\% deletion. Points are paired estimates and bars are
-95\% timestamp-block bootstrap intervals. More negative values indicate a
-larger multi-answer deficit.\label{fig:multi}}
+\includegraphics[width=\textwidth]{figures/followup/followup_query_objective.pdf}
+\caption{Query-max rolling margin minus label-level rolling margin at 30\%
+deletion. Points are paired effects and bars are 95\% circular moving-block
+bootstrap intervals. Panels report full-set query coverage, mean set size, and
+the multi-answer-minus-single-answer coverage gap. Negative values in panels
+(\textbf{a}) and (\textbf{c}) indicate worse query-level reliability.
+\label{fig:queryobjective}}
 \end{figure}
 
 \section{Discussion and Conclusions}
 \label{sec:discussion}
 
-The experiments answer the central question with a qualified yes. Updating a
-margin threshold from strictly past scores restores aggregate coverage near
-0.90 across two ICEWS datasets and two scorer families. The same conclusion is
-not obtained by choosing a different static score alone on ICEWS05-15, where
-all three KGCP transformations remain below target. On ICEWS14, however, KGCP
-Minmax and NegScore already perform near the target with smaller sets. The
-appropriate operational choice therefore depends on the dataset and on the
-cost assigned to missed labels versus large candidate sets.
+The central result is narrower, and more useful, than a universal method claim.
+When a margin threshold is fixed early, coverage later in the chronological
+test stream falls to roughly 0.80--0.82. Re-estimating that threshold from the
+most recent strictly past scores restores aggregate observed-label coverage
+near 0.90 in both ICEWS datasets and both controlled scorer families. Theorem~2
+offers the corresponding diagnostic interpretation: recent history can reduce
+the discrepancy between the past-score reference and the current score
+distribution. The data do not identify that discrepancy term directly, and no
+coverage guarantee under arbitrary drift follows.
 
-The negative results narrow the paper's contribution. Training-fact deletion
-does not materially worsen static coverage, so it cannot serve as the causal
-explanation for miscalibration. Filtered training negatives also have little
-effect on coverage in the paired tests. Both interventions are useful robustness
-checks, but neither supports a broad mechanism claim. The stable pattern is the
-difference between an early fixed threshold and a recent-history threshold
-under temporal ordering.
+The factorial ablation changes how this result should be used. Rolling updates
+are decisive for margin, but score transformation can matter as much as history.
+Minmax is far more efficient on ICEWS14, while its ICEWS05-15 coverage effect is
+mixed. Rolling Softmax obtains higher coverage by returning most of the entity
+vocabulary. A deployment rule should therefore be chosen from a joint
+reliability--utility frontier, not from coverage or mean set size alone.
 
-The multi-answer diagnostic is more serious. A method can attain nominal
-label-marginal coverage while failing to include all recorded answers for many
-queries. This gap is partly semantic: each additional valid label makes the
-full-set event harder. It is also practical, because multi-answer queries often
-represent the cases in which a shortlist is most valuable. Future methods
-should calibrate query-level set coverage or structured answer recall directly,
-rather than treating repeated query labels as independent examples.
+Two negative findings further limit the explanation. Removing up to 30\% of
+training facts does not measurably worsen static coverage, and filtered training
+negatives have little effect in the paired sensitivity study. Temporal mismatch,
+rather than the tested graph corruption, is the defensible motivation for
+updating the threshold. The multi-answer analysis also exposes a different
+estimand failure: label-marginal calibration may be adequate while the event
+that all answers are present remains unreliable. A simple query-max score is
+not enough because its calibration sample and quantile change at the same time.
 
-Several limitations remain. ICEWS14 and ICEWS05-15 are related political-event
-graphs, not a broad sample of temporal graph domains. The continuous complex
-scorer is a matched-protocol implementation and not the official TComplEx
-optimizer or checkpoint. Similarly, the KGCP baselines reproduce published
-score transformations under a common static calibration split, not the complete
-original pipeline. Five seeds limit training-randomness inference, while the
-moving-block bootstrap only approximates temporal dependence. Exact
-all-entity scoring also becomes expensive for substantially larger vocabularies.
+The study has four main boundaries. ICEWS14 and ICEWS05-15 are both political
+event graphs, so they do not establish domain-wide generality. The second
+scorer is a matched-protocol continuous complex model rather than an official
+TComplEx or TNTComplEx reproduction. That distinction is necessary because the
+published TKBC preprocessing places the same discrete time support in training,
+validation, and test, whereas the present protocol requires unseen future
+timestamps; a model with a free embedding for every future time would either be
+untrained there or leak temporal information. Likewise, the KGCP comparisons
+reuse published score transformations, not the authors' full training pipeline.
+Finally, five seeds limit inference over optimization randomness, and a moving-
+block bootstrap only approximates the dependence structure.
 
-In practice, rolling calibration is useful as an audit and repair when recent
-labels arrive before the next prediction batch. It should not be deployed by
-coverage alone: mean and tail set size, feedback delay, relation-side behavior,
-and multi-answer full-set coverage must be examined together. Future work should
-test official and recurrent TKG backbones, non-event and inductive datasets,
-predicate-conditional temporal calibration, and compact structured sets with
-explicit multi-answer objectives.
+These limits point to concrete next tests. Temporal answer-set calibration
+should be evaluated with inductive or extrapolative TKG backbones on non-ICEWS
+domains. Structured calibration objectives should preserve query-level sample
+size or explicitly model answer multiplicity. Predicate-conditional temporal
+rules may reduce the large relation and direction heterogeneity that marginal
+coverage averages away. For large entity vocabularies, any reliability gain
+must also be paired with candidate-generation or retrieval methods that bound
+the cost of all-entity scoring.
 
-In conclusion, recent-history prequential calibration can correct aggregate
-temporal undercoverage, but the improvement is baseline-dependent and often
-requires thousands of candidate entities. The present evidence supports a
-transparent reliability--utility diagnostic. It does not support universal
-superiority, a deletion-driven failure mechanism, or a distribution-free
-coverage guarantee under arbitrary temporal drift.
+In conclusion, recent-history prequential calibration repairs a reproducible
+aggregate undercoverage pattern, but it does so with thousands of additional
+candidates and leaves multi-answer reliability unresolved. The practical
+contribution is a protocol for auditing that trade-off without current-timestamp
+leakage, together with evidence showing which apparently plausible explanations
+and remedies do not survive controlled tests.
 
 \authorcontributions{Conceptualization, X.W.; methodology, X.W.; software, X.W.; validation, X.W.; formal analysis, X.W.; investigation, X.W.; data curation, X.W.; writing--original draft preparation, X.W.; writing--review and editing, X.W.; visualization, X.W.; project administration, X.W.; funding acquisition, X.W. The author has read and agreed to the published version of the manuscript.}
 
@@ -453,7 +538,9 @@ coverage guarantee under arbitrary temporal drift.
 
 \informedconsent{Not applicable.}
 
-\dataavailability{The study uses ICEWS14 and ICEWS05-15 derived from the public ICEWS Coded Event Data at \url{https://doi.org/10.7910/DVN/28075}. Source code, preprocessing scripts, resolved configurations, derived result tables, figure-generation scripts, checksums, and the clean-clone release audit are available at \url{https://github.com/xywang815/riskcal-tkg-w} under the MIT License. The submission snapshot is identified by the tag \texttt{v1.0.0-mdpi-information-\allowbreak submission}.}
+\dataavailability{The study uses ICEWS14 and ICEWS05-15 derived from the public ICEWS Coded Event Data at \url{https://doi.org/10.7910/DVN/28075}. Source code, preprocessing scripts, resolved configurations, derived result tables, figure-generation scripts, and checksums are available at \url{https://github.com/xywang815/riskcal-tkg-w} under the MIT License.}
+
+\acknowledgments{During the preparation of this manuscript and study, the author used OpenAI Codex to assist code development, experiment orchestration, language editing, and document formatting. The author reviewed the source and checksum-bound outputs, edited the manuscript, and takes full responsibility for the content of this publication.}
 
 \conflictsofinterest{The author declares no conflicts of interest. The funder had no role in the design of the study; in the collection, analysis, or interpretation of data; in the writing of the manuscript; or in the decision to publish the results.}
 

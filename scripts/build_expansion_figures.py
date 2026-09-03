@@ -27,9 +27,9 @@ METHOD_ORDER = (
 METHOD_LABELS = {
     "static_margin": "Static margin",
     "rolling_margin": "Rolling margin",
-    "kgcp_negscore_static": "KGCP NegScore",
-    "kgcp_minmax_static": "KGCP Minmax",
-    "kgcp_softmax_static": "KGCP Softmax",
+    "kgcp_negscore_static": "Static NegScore",
+    "kgcp_minmax_static": "Static Minmax",
+    "kgcp_softmax_static": "Static Softmax",
 }
 METHOD_COLORS = {
     "static_margin": "#D55E00",
@@ -53,9 +53,9 @@ RUN_ORDER = (
 )
 RUN_LABELS = {
     "icews14_distmult_filtered": "ICEWS14 | DistMult",
-    "icews14_tcomplex_filtered": "ICEWS14 | continuous ComplEx",
+    "icews14_tcomplex_filtered": "ICEWS14 | continuous complex",
     "icews05_15_distmult_filtered": "ICEWS05-15 | DistMult",
-    "icews05_15_tcomplex_filtered": "ICEWS05-15 | continuous ComplEx",
+    "icews05_15_tcomplex_filtered": "ICEWS05-15 | continuous complex",
 }
 
 
@@ -287,9 +287,9 @@ def build_reviewer_diagnostics(
     method = method.sort_values(["run_rank", "method_rank"], kind="stable")
     diagnostic_run_labels = {
         "icews14_distmult_filtered": "ICEWS14 | DistMult",
-        "icews14_tcomplex_filtered": "ICEWS14 | cComplEx",
+        "icews14_tcomplex_filtered": "ICEWS14 | complex",
         "icews05_15_distmult_filtered": "ICEWS05-15 | DistMult",
-        "icews05_15_tcomplex_filtered": "ICEWS05-15 | cComplEx",
+        "icews05_15_tcomplex_filtered": "ICEWS05-15 | complex",
     }
     method_labels = [
         f"{diagnostic_run_labels.get(run, run)} | {METHOD_LABELS.get(base, base)}"
@@ -319,7 +319,7 @@ def build_reviewer_diagnostics(
     }
     diagnostic_model_labels = {
         "temporal_distmult": "DistMult",
-        "continuous_tcomplex": "cComplEx",
+        "continuous_tcomplex": "complex",
     }
     sampling_labels = [
         f"{diagnostic_dataset_labels.get(dataset, dataset)} | "

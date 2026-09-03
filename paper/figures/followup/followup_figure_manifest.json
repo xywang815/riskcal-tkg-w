@@ -1,0 +1,18 @@
+{
+  "inputs": {
+    "analysis": {
+      "followup_by_seed.csv": "686a576169d75c07625693642f58a6b38799309669aeab650cc6aa614998a240"
+    },
+    "bootstrap": {
+      "followup_bootstrap_summary.csv": "276dccfe8aea2e8d23a127489318d2e01bc6d2e2116aed8804f8d0eb5c9c5cad"
+    }
+  },
+  "outputs": {
+    "followup_factorial.pdf": "57d575f2208468d29c8bb4beb25247790d65d9da022b49e896bad88831d767ec",
+    "followup_factorial.png": "32b57d8c061983a42228c91e54bf2d0abb696e69476983745f5d9a56c4b54934",
+    "followup_query_objective.pdf": "09fcbf2aa2924c8b1d8abeb3e82b13471e017a6227ca375f17b88f064859d65b",
+    "followup_query_objective.png": "3c757f5a1b78a1a7e6ab30119c425f4d408115810a485fa6eb5bfd9475acd99f"
+  },
+  "primary_block_length": 7,
+  "target_coverage": 0.9
+}
