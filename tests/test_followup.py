@@ -90,3 +90,63 @@ def test_aggregation_and_query_contrast_keep_estimands_separate() -> None:
     assert contrast["full_set_coverage_query_minus_label"] == pytest.approx(0.1)
     assert contrast["mean_set_size_query_minus_label"] == pytest.approx(1.0)
 
+
+def test_aggregation_ignores_undefined_zero_weight_subgroups() -> None:
+    rows = pd.DataFrame(
+        [
+            {
+                "case": "toy",
+                "dataset_mode": "toy",
+                "model_name": "temporal_distmult",
+                "negative_sampling": "filtered",
+                "seed": 17,
+                "deletion_rate": 0.3,
+                "objective": "label",
+                "score": "margin",
+                "history": "rolling",
+                "method": "label_margin_rolling",
+                "label_count": 10,
+                "query_count": 10,
+                "single_query_count": 10,
+                "multi_query_count": 0,
+                "label_coverage": 0.9,
+                "full_set_coverage": 0.9,
+                "partial_answer_recall": 0.9,
+                "mean_set_size": 4.0,
+                "single_full_set_coverage": 0.9,
+                "multi_full_set_coverage": np.nan,
+                "single_mean_set_size": 4.0,
+                "multi_mean_set_size": np.nan,
+            },
+            {
+                "case": "toy",
+                "dataset_mode": "toy",
+                "model_name": "temporal_distmult",
+                "negative_sampling": "filtered",
+                "seed": 17,
+                "deletion_rate": 0.3,
+                "objective": "label",
+                "score": "margin",
+                "history": "rolling",
+                "method": "label_margin_rolling",
+                "label_count": 12,
+                "query_count": 10,
+                "single_query_count": 8,
+                "multi_query_count": 2,
+                "label_coverage": 0.9,
+                "full_set_coverage": 0.8,
+                "partial_answer_recall": 0.85,
+                "mean_set_size": 5.0,
+                "single_full_set_coverage": 0.875,
+                "multi_full_set_coverage": 0.5,
+                "single_mean_set_size": 4.5,
+                "multi_mean_set_size": 7.0,
+            },
+        ]
+    )
+    summary = aggregate_by_seed(rows).iloc[0]
+    assert summary["multi_full_set_coverage"] == pytest.approx(0.5)
+    assert summary["multi_mean_set_size"] == pytest.approx(7.0)
+    assert summary["multi_minus_single_full_set_coverage"] == pytest.approx(
+        0.5 - ((10 * 0.9 + 8 * 0.875) / 18)
+    )

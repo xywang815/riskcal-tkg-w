@@ -80,6 +80,15 @@ def _atomic_json(path: Path, value: object) -> None:
     temporary.replace(path)
 
 
+def _weighted_finite_mean(values: pd.Series, weights: pd.Series) -> float:
+    value_array = values.to_numpy(dtype=float)
+    weight_array = weights.to_numpy(dtype=float)
+    valid = np.isfinite(value_array) & np.isfinite(weight_array) & (weight_array > 0)
+    if not np.any(valid):
+        return float("nan")
+    return float(np.average(value_array[valid], weights=weight_array[valid]))
+
+
 def _score_all_objects(
     model: torch.nn.Module,
     facts: np.ndarray,
@@ -400,35 +409,43 @@ def aggregate_by_seed(rows: pd.DataFrame) -> pd.DataFrame:
                 "query_count": int(query_total),
                 "single_query_count": int(single_total),
                 "multi_query_count": int(multi_total),
-                "label_coverage": float(
-                    np.average(group["label_coverage"], weights=group["label_count"])
+                "label_coverage": _weighted_finite_mean(
+                    group["label_coverage"], group["label_count"]
                 ),
-                "full_set_coverage": float(
-                    np.average(group["full_set_coverage"], weights=group["query_count"])
+                "full_set_coverage": _weighted_finite_mean(
+                    group["full_set_coverage"], group["query_count"]
                 ),
-                "partial_answer_recall": float(
-                    np.average(group["partial_answer_recall"], weights=group["query_count"])
+                "partial_answer_recall": _weighted_finite_mean(
+                    group["partial_answer_recall"], group["query_count"]
                 ),
-                "mean_set_size": float(
-                    np.average(group["mean_set_size"], weights=group["query_count"])
+                "mean_set_size": _weighted_finite_mean(
+                    group["mean_set_size"], group["query_count"]
                 ),
                 "single_full_set_coverage": (
-                    float(np.average(group["single_full_set_coverage"], weights=group["single_query_count"]))
+                    _weighted_finite_mean(
+                        group["single_full_set_coverage"], group["single_query_count"]
+                    )
                     if single_total
                     else float("nan")
                 ),
                 "multi_full_set_coverage": (
-                    float(np.average(group["multi_full_set_coverage"], weights=group["multi_query_count"]))
+                    _weighted_finite_mean(
+                        group["multi_full_set_coverage"], group["multi_query_count"]
+                    )
                     if multi_total
                     else float("nan")
                 ),
                 "single_mean_set_size": (
-                    float(np.average(group["single_mean_set_size"], weights=group["single_query_count"]))
+                    _weighted_finite_mean(
+                        group["single_mean_set_size"], group["single_query_count"]
+                    )
                     if single_total
                     else float("nan")
                 ),
                 "multi_mean_set_size": (
-                    float(np.average(group["multi_mean_set_size"], weights=group["multi_query_count"]))
+                    _weighted_finite_mean(
+                        group["multi_mean_set_size"], group["multi_query_count"]
+                    )
                     if multi_total
                     else float("nan")
                 ),
