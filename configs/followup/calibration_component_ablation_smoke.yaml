@@ -1,0 +1,10 @@
+target_coverage: 0.90
+deletion_rate: 0.30
+temperature: 1.0
+rolling_window: 1000
+seeds: [17]
+cases:
+  - name: icews14_distmult
+    config: configs/expansion/icews14_distmult_filtered.yaml
+    run_relative: icews14_distmult_filtered/20260831T183333122638Z-7584b3c257f7
+

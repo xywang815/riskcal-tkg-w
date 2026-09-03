@@ -1,0 +1,19 @@
+target_coverage: 0.90
+deletion_rate: 0.30
+temperature: 1.0
+rolling_window: 1000
+seeds: [17, 29, 43, 59, 71]
+cases:
+  - name: icews14_distmult
+    config: configs/expansion/icews14_distmult_filtered.yaml
+    run_relative: icews14_distmult_filtered/20260831T183333122638Z-7584b3c257f7
+  - name: icews14_continuous_complex
+    config: configs/expansion/icews14_tcomplex_filtered.yaml
+    run_relative: icews14_tcomplex_filtered/20260831T202456266777Z-219d03258eac
+  - name: icews05_15_distmult
+    config: configs/expansion/icews05_15_distmult_filtered.yaml
+    run_relative: icews05_15_distmult_filtered/20260831T224928259632Z-dffbfb732f3d
+  - name: icews05_15_continuous_complex
+    config: configs/expansion/icews05_15_tcomplex_filtered.yaml
+    run_relative: icews05_15_tcomplex_filtered/20260901T095614728667Z-946c4477453d
+
