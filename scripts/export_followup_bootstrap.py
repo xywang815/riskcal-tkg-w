@@ -11,7 +11,10 @@ from typing import Any, Sequence
 import numpy as np
 import pandas as pd
 
-from scripts.export_expansion_bootstrap import bootstrap_statistic
+try:
+    from scripts.export_expansion_bootstrap import bootstrap_statistic
+except ModuleNotFoundError:  # Direct execution adds scripts/, not the repository root.
+    from export_expansion_bootstrap import bootstrap_statistic
 
 
 DEFAULT_BLOCK_LENGTHS = (3, 7, 14, 21)
