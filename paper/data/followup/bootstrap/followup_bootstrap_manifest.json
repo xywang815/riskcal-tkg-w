@@ -1,0 +1,20 @@
+{
+  "block_lengths": [
+    3,
+    7,
+    14,
+    21
+  ],
+  "bootstrap_seed": 20260903,
+  "case_count": 4,
+  "created_at": "2026-09-03T06:37:31.882115+00:00",
+  "git_commit": "d6c9602ec37081599ab5767e77c24a2bb1ef1b4d",
+  "iterations": 20000,
+  "resampling_scheme": "equal-seed circular moving-block bootstrap with one shared timestamp-block draw per replicate",
+  "source_git_commit": "7f19fe7538738311fd783d76dc8b72fde7822665",
+  "source_manifest_sha256": "80f8f68fa13b2e1abe9bb6d676274cb501a81ecedb993cc86835f5f8664bad25",
+  "source_rows_sha256": "9c65a021cdf0d2502dd5c372829d875ff19b6eb95471fe808cba9c30233a817a",
+  "statistics_count": 208,
+  "status": "complete",
+  "target_coverage": 0.9
+}
