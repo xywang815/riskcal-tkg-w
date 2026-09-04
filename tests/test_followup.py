@@ -6,12 +6,29 @@ from riskcal_tkg.followup import (
     build_query_grouping,
     candidate_nonconformity,
     query_max_true_nonconformity,
+    summarize_budgeted_query_masks,
     summarize_query_mask,
 )
 from scripts.export_followup_calibration_study import (
+    _resolve_matrix_run,
     aggregate_by_seed,
     build_query_objective_contrasts,
 )
+
+
+def test_matrix_run_resolver_supports_relocated_results(tmp_path) -> None:
+    run_root = tmp_path / "matrix" / "toy" / "run-1"
+    run_root.mkdir(parents=True)
+    (run_root / "run_manifest.json").write_text(
+        '{"status": "complete"}\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "matrix" / "matrix_progress.json").write_text(
+        '{"runs": {"toy": {"status": "complete", '
+        '"run_root": "/relocated/toy"}}}\n',
+        encoding="utf-8",
+    )
+    assert _resolve_matrix_run(tmp_path / "matrix", "toy") == run_root
 
 
 def test_candidate_nonconformity_matches_score_definitions() -> None:
@@ -52,6 +69,26 @@ def test_query_max_score_and_metrics_use_unique_queries() -> None:
     assert summary["partial_answer_recall"] == pytest.approx(0.75)
     assert summary["single_query_count"] == 1
     assert summary["multi_query_count"] == 1
+    assert summary["answer_count_1_full_set_coverage"] == pytest.approx(1.0)
+    assert summary["answer_count_2_full_set_coverage"] == pytest.approx(0.0)
+
+
+def test_budgeted_query_masks_report_coverage_size_frontier() -> None:
+    facts = np.asarray(
+        [[0, 0, 1, 4], [0, 0, 2, 4], [3, 1, 0, 4]],
+        dtype=np.int64,
+    )
+    scores = np.asarray(
+        [[0.0, 0.9, 0.8, 0.1], [0.1, 0.7, 0.6, 0.5]]
+    )
+    grouping = build_query_grouping(facts)
+    mask = np.ones_like(scores, dtype=bool)
+    summary = summarize_budgeted_query_masks(mask, scores, facts, grouping, (1, 2))
+    assert summary["budget_1_mean_set_size"] == 1.0
+    assert summary["budget_2_mean_set_size"] == 2.0
+    assert summary["budget_1_label_coverage"] == pytest.approx(1 / 3)
+    assert summary["budget_2_label_coverage"] == pytest.approx(2 / 3)
+    assert summary["budget_2_fraction_truncated"] == 1.0
 
 
 def test_aggregation_and_query_contrast_keep_estimands_separate() -> None:

@@ -6,6 +6,12 @@ import numpy as np
 
 
 SCORE_NAMES = ("margin", "negscore", "minmax", "softmax")
+ANSWER_COUNT_BINS = (
+    ("1", 1, 1),
+    ("2", 2, 2),
+    ("3_5", 3, 5),
+    ("gt5", 6, None),
+)
 
 
 def candidate_nonconformity(
@@ -117,7 +123,7 @@ def summarize_query_mask(
     def conditional_mean(values_: np.ndarray, selected: np.ndarray) -> float:
         return float(np.mean(values_[selected])) if np.any(selected) else float("nan")
 
-    return {
+    result: dict[str, float | int] = {
         "label_count": int(len(labels)),
         "query_count": int(grouping.query_count),
         "single_query_count": int(single.sum()),
@@ -132,5 +138,65 @@ def summarize_query_mask(
         "multi_full_set_coverage": conditional_mean(full_set, multi),
         "single_mean_set_size": conditional_mean(set_sizes, single),
         "multi_mean_set_size": conditional_mean(set_sizes, multi),
+        "vocabulary_size": int(mask.shape[1]),
+        "mean_set_fraction": float(set_sizes.mean() / mask.shape[1]),
+        "full_vocabulary_rate": float((set_sizes == mask.shape[1]).mean()),
     }
+    for label, lower, upper in ANSWER_COUNT_BINS:
+        selected = grouping.answer_counts >= lower
+        if upper is not None:
+            selected &= grouping.answer_counts <= upper
+        count = int(selected.sum())
+        result[f"answer_count_{label}_query_count"] = count
+        result[f"answer_count_{label}_full_set_coverage"] = conditional_mean(
+            full_set,
+            selected,
+        )
+        result[f"answer_count_{label}_partial_answer_recall"] = conditional_mean(
+            partial_recall,
+            selected,
+        )
+        result[f"answer_count_{label}_mean_set_size"] = conditional_mean(
+            set_sizes,
+            selected,
+        )
+    return result
 
+
+def summarize_budgeted_query_masks(
+    query_mask: np.ndarray,
+    query_scores: np.ndarray,
+    facts: np.ndarray,
+    grouping: QueryGrouping,
+    budgets: tuple[int, ...],
+) -> dict[str, float | int]:
+    mask = np.asarray(query_mask, dtype=bool)
+    scores = np.asarray(query_scores, dtype=float)
+    if mask.shape != scores.shape or len(mask) != grouping.query_count:
+        raise ValueError("query masks and scores must have one row per unique query")
+    if not np.isfinite(scores).all():
+        raise ValueError("query scores must be finite")
+    if not budgets or any(budget <= 0 for budget in budgets):
+        raise ValueError("budgets must contain positive integers")
+    result: dict[str, float | int] = {}
+    base_sizes = mask.sum(axis=1)
+    vocabulary_size = mask.shape[1]
+    row_indices = np.arange(len(mask))[:, None]
+    for budget in sorted(set(int(value) for value in budgets)):
+        if budget >= vocabulary_size:
+            budgeted = mask.copy()
+        else:
+            top_indices = np.argpartition(scores, -budget, axis=1)[:, -budget:]
+            top_mask = np.zeros_like(mask)
+            top_mask[row_indices, top_indices] = True
+            budgeted = mask & top_mask
+        summary = summarize_query_mask(budgeted, facts, grouping)
+        prefix = f"budget_{budget}"
+        result[f"{prefix}_label_coverage"] = summary["label_coverage"]
+        result[f"{prefix}_full_set_coverage"] = summary["full_set_coverage"]
+        result[f"{prefix}_partial_answer_recall"] = summary[
+            "partial_answer_recall"
+        ]
+        result[f"{prefix}_mean_set_size"] = summary["mean_set_size"]
+        result[f"{prefix}_fraction_truncated"] = float((base_sizes > budget).mean())
+    return result

@@ -11,10 +11,8 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import torch
 import yaml
 
-from riskcal_tkg.artifacts import sha256_file
 from riskcal_tkg.calibration import CalibrationPool, finite_sample_quantile
 from riskcal_tkg.config import load_config
 from riskcal_tkg.data import (
@@ -24,16 +22,25 @@ from riskcal_tkg.data import (
     temporal_split,
 )
 from riskcal_tkg.followup import (
+    ANSWER_COUNT_BINS,
     SCORE_NAMES,
     build_query_grouping,
     candidate_nonconformity,
     query_max_true_nonconformity,
+    summarize_budgeted_query_masks,
     summarize_query_mask,
 )
-from riskcal_tkg.model import build_temporal_model
 
 
 HISTORY_NAMES = ("static", "expanding", "rolling")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def _sha256_json(value: object) -> str:
@@ -71,6 +78,35 @@ def _git_commit(root: Path) -> str | None:
         text=True,
     )
     return result.stdout.strip() if result.returncode == 0 else None
+
+
+def _matrix_commit(matrix_root: Path) -> str | None:
+    progress_path = matrix_root / "matrix_progress.json"
+    if not progress_path.is_file():
+        return None
+    progress = json.loads(progress_path.read_text(encoding="utf-8"))
+    commit = progress.get("git_commit")
+    return commit if isinstance(commit, str) and len(commit) == 40 else None
+
+
+def _resolve_matrix_run(matrix_root: Path, key: str) -> Path:
+    progress = json.loads(
+        (matrix_root / "matrix_progress.json").read_text(encoding="utf-8")
+    )
+    record = progress.get("runs", {}).get(key)
+    if not isinstance(record, dict) or record.get("status") != "complete":
+        raise ValueError(f"matrix run is incomplete: {key}")
+    recorded = Path(str(record.get("run_root", "")))
+    if recorded.is_dir():
+        return recorded
+    candidates = [
+        path.parent
+        for path in (matrix_root / key).glob("*/run_manifest.json")
+        if json.loads(path.read_text(encoding="utf-8")).get("status") == "complete"
+    ]
+    if len(candidates) != 1:
+        raise ValueError(f"could not resolve one complete matrix run for {key}")
+    return candidates[0]
 
 
 def _atomic_csv(path: Path, frame: pd.DataFrame) -> None:
@@ -177,11 +213,14 @@ def _evaluate_case_seed(
     target_coverage: float,
     temperature: float,
     rolling_window: int,
+    candidate_budgets: tuple[int, ...],
     matrix_root: Path,
     data_root: Path | None,
     repo_root: Path,
     device: torch.device,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
+    from riskcal_tkg.model import build_temporal_model
+
     config_path = repo_root / str(case["config"])
     config = load_config(config_path)
     source_config_sha256 = _sha256_json(_jsonable(asdict(config)))
@@ -197,7 +236,10 @@ def _evaluate_case_seed(
         split.calibration,
         fractions=config.calibration_role_fractions,
     )
-    run_root = matrix_root / str(case["run_relative"])
+    if "run_key" in case:
+        run_root = _resolve_matrix_run(matrix_root, str(case["run_key"]))
+    else:
+        run_root = matrix_root / str(case["run_relative"])
     label = _condition_label(seed, deletion_rate)
     checkpoint, checkpoint_sha256 = _verified_checkpoint(run_root, label)
     if source_config_sha256 != checkpoint["config_sha256"]:
@@ -307,11 +349,22 @@ def _evaluate_case_seed(
                 alpha,
             )
             unique_candidates = candidate_values[grouping.first_indices]
+            unique_scores = scores[grouping.first_indices]
             for history in HISTORY_NAMES:
+                prediction_mask = unique_candidates <= thresholds[history]
                 summary = summarize_query_mask(
-                    unique_candidates <= thresholds[history],
+                    prediction_mask,
                     facts,
                     grouping,
+                )
+                summary.update(
+                    summarize_budgeted_query_masks(
+                        prediction_mask,
+                        unique_scores,
+                        facts,
+                        grouping,
+                        candidate_budgets,
+                    )
                 )
                 rows.append(
                     {
@@ -344,10 +397,20 @@ def _evaluate_case_seed(
         )
         unique_margin = margin_candidate_values[grouping.first_indices]
         for history in HISTORY_NAMES:
+            prediction_mask = unique_margin <= query_thresholds[history]
             summary = summarize_query_mask(
-                unique_margin <= query_thresholds[history],
+                prediction_mask,
                 facts,
                 grouping,
+            )
+            summary.update(
+                summarize_budgeted_query_masks(
+                    prediction_mask,
+                    scores[grouping.first_indices],
+                    facts,
+                    grouping,
+                    candidate_budgets,
+                )
             )
             rows.append(
                 {
@@ -397,6 +460,9 @@ def _evaluate_case_seed(
 
 
 def aggregate_by_seed(rows: pd.DataFrame) -> pd.DataFrame:
+    rows = rows.copy()
+    if "time_encoding" not in rows:
+        rows["time_encoding"] = "polynomial_fourier"
     keys = [
         "case",
         "dataset_mode",
@@ -468,6 +534,41 @@ def aggregate_by_seed(rows: pd.DataFrame) -> pd.DataFrame:
         record["multi_minus_single_full_set_coverage"] = (
             record["multi_full_set_coverage"] - record["single_full_set_coverage"]
         )
+        if "vocabulary_size" in group:
+            record["vocabulary_size"] = int(group["vocabulary_size"].iloc[0])
+            record["mean_set_fraction"] = _weighted_finite_mean(
+                group["mean_set_fraction"], group["query_count"]
+            )
+            record["full_vocabulary_rate"] = _weighted_finite_mean(
+                group["full_vocabulary_rate"], group["query_count"]
+            )
+        for label, _, _ in ANSWER_COUNT_BINS:
+            count_column = f"answer_count_{label}_query_count"
+            if count_column not in group:
+                continue
+            count = int(group[count_column].sum())
+            record[count_column] = count
+            for metric in (
+                "full_set_coverage",
+                "partial_answer_recall",
+                "mean_set_size",
+            ):
+                column = f"answer_count_{label}_{metric}"
+                record[column] = (
+                    _weighted_finite_mean(group[column], group[count_column])
+                    if count
+                    else float("nan")
+                )
+        for column in group.columns:
+            if not column.startswith("budget_"):
+                continue
+            weight_column = (
+                "label_count" if column.endswith("label_coverage") else "query_count"
+            )
+            record[column] = _weighted_finite_mean(
+                group[column],
+                group[weight_column],
+            )
         records.append(record)
     return pd.DataFrame(records)
 
@@ -512,6 +613,8 @@ def export_study(
     data_root: Path | None = None,
     device_name: str = "auto",
 ) -> dict[str, Any]:
+    import torch
+
     if output_root.exists():
         raise FileExistsError(output_root)
     output_root.mkdir(parents=True)
@@ -537,6 +640,13 @@ def export_study(
                 target_coverage=float(spec["target_coverage"]),
                 temperature=float(spec["temperature"]),
                 rolling_window=int(spec["rolling_window"]),
+                candidate_budgets=tuple(
+                    int(value)
+                    for value in spec.get(
+                        "candidate_budgets",
+                        (50, 100, 250, 500, 1000),
+                    )
+                ),
                 matrix_root=matrix_root,
                 data_root=data_root,
                 repo_root=repo_root,
@@ -559,7 +669,7 @@ def export_study(
     manifest: dict[str, Any] = {
         "status": "complete",
         "created_at": datetime.now(UTC).isoformat(),
-        "git_commit": _git_commit(repo_root),
+        "git_commit": _matrix_commit(matrix_root) or _git_commit(repo_root),
         "spec": spec,
         "spec_sha256": sha256_file(spec_path),
         "script_sha256": sha256_file(Path(__file__)),
