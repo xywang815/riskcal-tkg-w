@@ -46,7 +46,9 @@ from scripts.export_window_ablation import (
 )
 
 
-DEFAULT_DELAYS = (0, 1, 3, 7)
+DEFAULT_DELAYS = (0, 1, 3, 7, 14)
+DEFAULT_RETENTIONS = (1.0, 0.9, 0.7)
+DEFAULT_FEEDBACK_SEED = 20260904
 DEFAULT_BOOTSTRAP_SEED = 20260818
 DEFAULT_BLOCK_LENGTH = 7
 DEFAULT_ITERATIONS = 20_000
@@ -85,6 +87,7 @@ def _method_sort(frame: pd.DataFrame, extra_columns: list[str] | None = None) ->
     result["_method_rank"] = result["method"].map(method_rank).fillna(len(method_rank))
     columns = [
         "deletion_rate",
+        "feedback_retention",
         "extra_delay_blocks",
         *(extra_columns or []),
         "_method_rank",
@@ -104,6 +107,14 @@ def _validate_delays(delays: tuple[int, ...]) -> tuple[int, ...]:
     return tuple(sorted(set(int(delay) for delay in delays)))
 
 
+def _validate_retentions(retentions: tuple[float, ...]) -> tuple[float, ...]:
+    if not retentions:
+        raise ValueError("feedback retentions must be nonempty")
+    if any(not 0.0 < retention <= 1.0 for retention in retentions):
+        raise ValueError("feedback retentions must be in (0, 1]")
+    return tuple(sorted(set(float(value) for value in retentions), reverse=True))
+
+
 def release_due_feedback(
     history: ScoreHistory,
     pending: list[tuple[int, int, np.ndarray]],
@@ -120,6 +131,9 @@ def release_due_feedback(
 
 
 def summarize_delay_rows(rows: pd.DataFrame, target_coverage: float) -> pd.DataFrame:
+    rows = rows.copy()
+    if "feedback_retention" not in rows:
+        rows["feedback_retention"] = 1.0
     required = {
         "seed",
         "deletion_rate",
@@ -135,8 +149,15 @@ def summarize_delay_rows(rows: pd.DataFrame, target_coverage: float) -> pd.DataF
     if missing:
         raise ValueError(f"delay rows are missing columns: {missing}")
     records: list[dict[str, Any]] = []
-    for (seed, deletion_rate, delay, method), frame in rows.groupby(
-        ["seed", "deletion_rate", "extra_delay_blocks", "method"], sort=False
+    for (seed, deletion_rate, delay, retention, method), frame in rows.groupby(
+        [
+            "seed",
+            "deletion_rate",
+            "extra_delay_blocks",
+            "feedback_retention",
+            "method",
+        ],
+        sort=False,
     ):
         weights = frame["query_count"].to_numpy(dtype=float)
         records.append(
@@ -144,6 +165,7 @@ def summarize_delay_rows(rows: pd.DataFrame, target_coverage: float) -> pd.DataF
                 "seed": int(seed),
                 "deletion_rate": float(deletion_rate),
                 "extra_delay_blocks": int(delay),
+                "feedback_retention": float(retention),
                 "method": str(method),
                 "query_count": int(frame["query_count"].sum()),
                 "coverage": float(np.average(frame["coverage"], weights=weights)),
@@ -177,12 +199,19 @@ def aggregate_delay_summary(summary: pd.DataFrame) -> pd.DataFrame:
         "pool_span_blocks_mean",
     ]
     records: list[dict[str, Any]] = []
-    for (deletion_rate, delay, method), frame in summary.groupby(
-        ["deletion_rate", "extra_delay_blocks", "method"], sort=False
+    for (deletion_rate, delay, retention, method), frame in summary.groupby(
+        [
+            "deletion_rate",
+            "extra_delay_blocks",
+            "feedback_retention",
+            "method",
+        ],
+        sort=False,
     ):
         record: dict[str, Any] = {
             "deletion_rate": float(deletion_rate),
             "extra_delay_blocks": int(delay),
+            "feedback_retention": float(retention),
             "method": str(method),
             "seed_count": int(frame["seed"].nunique()),
         }
@@ -202,6 +231,9 @@ def build_delay_effect_frames(
     deletion_rate: float,
     target_coverage: float,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    rows = rows.copy()
+    if "feedback_retention" not in rows:
+        rows["feedback_retention"] = 1.0
     selected = rows[
         (rows["deletion_rate"] == deletion_rate)
         & (rows["method"].isin(["static", "rolling"]))
@@ -218,7 +250,7 @@ def build_delay_effect_frames(
     if missing:
         raise ValueError(f"delay rows are missing columns: {missing}")
     pivot = selected.pivot_table(
-        index=["seed", "timestamp", "extra_delay_blocks"],
+        index=["seed", "timestamp", "extra_delay_blocks", "feedback_retention"],
         columns="method",
         values=["coverage", "query_count"],
         aggfunc="first",
@@ -231,6 +263,7 @@ def build_delay_effect_frames(
             "seed": base["seed"].astype(int),
             "timestamp": base["timestamp"].astype(int),
             "extra_delay_blocks": base["extra_delay_blocks"].astype(int),
+            "feedback_retention": base["feedback_retention"].astype(float),
             "undercoverage_reduction": np.maximum(
                 target_coverage - base[("coverage", "static")], 0.0
             )
@@ -242,6 +275,7 @@ def build_delay_effect_frames(
             "seed": base["seed"].astype(int),
             "timestamp": base["timestamp"].astype(int),
             "extra_delay_blocks": base["extra_delay_blocks"].astype(int),
+            "feedback_retention": base["feedback_retention"].astype(float),
             "query_count": base[("query_count", "static")].astype(float),
             "coverage_gain": base[("coverage", "rolling")]
             - base[("coverage", "static")],
@@ -269,9 +303,23 @@ def bootstrap_delay_effects(
         target_coverage=target_coverage,
     )
     records: list[dict[str, Any]] = []
-    for index, delay in enumerate(sorted(undercoverage["extra_delay_blocks"].unique())):
-        delay_under = undercoverage[undercoverage["extra_delay_blocks"] == delay]
-        delay_gain = coverage_gain[coverage_gain["extra_delay_blocks"] == delay]
+    policies = sorted(
+        {
+            (int(row.extra_delay_blocks), float(row.feedback_retention))
+            for row in undercoverage.itertuples()
+        }
+    )
+    for index, (delay, retention) in enumerate(policies):
+        under_mask = (
+            (undercoverage["extra_delay_blocks"] == delay)
+            & np.isclose(undercoverage["feedback_retention"], retention)
+        )
+        gain_mask = (
+            (coverage_gain["extra_delay_blocks"] == delay)
+            & np.isclose(coverage_gain["feedback_retention"], retention)
+        )
+        delay_under = undercoverage[under_mask]
+        delay_gain = coverage_gain[gain_mask]
         for offset, (name, frame, value_column, weight_column, weighting) in enumerate(
             (
                 (
@@ -304,6 +352,7 @@ def bootstrap_delay_effects(
                     "deletion_rate": float(deletion_rate),
                     "target": float(target_coverage),
                     "extra_delay_blocks": int(delay),
+                    "feedback_retention": float(retention),
                     "observed": result["observed"],
                     "ci95_low": result["ci95"][0],
                     "ci95_high": result["ci95"][1],
@@ -316,7 +365,7 @@ def bootstrap_delay_effects(
                 }
             )
     return pd.DataFrame(records).sort_values(
-        ["extra_delay_blocks", "statistic"], kind="stable"
+        ["feedback_retention", "extra_delay_blocks", "statistic"], kind="stable"
     ).reset_index(drop=True)
 
 
@@ -332,6 +381,8 @@ def _evaluate_condition(
     rolling_window: int,
     target_coverage: float,
     delays: tuple[int, ...],
+    retentions: tuple[float, ...],
+    feedback_seed: int,
     device: Any,
 ) -> list[dict[str, Any]]:
     relation_count = len(table.relation_to_id)
@@ -358,8 +409,20 @@ def _evaluate_condition(
         alpha=1.0 - target_coverage,
     )
 
-    histories = {delay: ScoreHistory() for delay in delays}
-    pending = {delay: [] for delay in delays}
+    policies = tuple(
+        (delay, retention) for delay in delays for retention in retentions
+    )
+    histories = {policy: ScoreHistory() for policy in policies}
+    pending = {policy: [] for policy in policies}
+    feedback_rngs = {
+        policy: np.random.default_rng(
+            feedback_seed
+            + 100_000 * int(seed)
+            + 1_000 * int(policy[0])
+            + int(round(100 * policy[1]))
+        )
+        for policy in policies
+    }
     for batch, margins in zip(initial_batches, initial_margins, strict=True):
         for history in histories.values():
             history.add(batch.timestamp, margins)
@@ -367,10 +430,10 @@ def _evaluate_condition(
     rows: list[dict[str, Any]] = []
     test_timestamps = [int(value) for value in np.unique(split.test.timestamps)]
     for timestamp_index, timestamp in enumerate(test_timestamps):
-        for delay in delays:
-            pending[delay] = release_due_feedback(
-                histories[delay],
-                pending[delay],
+        for policy in policies:
+            pending[policy] = release_due_feedback(
+                histories[policy],
+                pending[policy],
                 timestamp_index,
             )
 
@@ -381,10 +444,11 @@ def _evaluate_condition(
         query_count = int(len(labels))
         current_margins = margin_nonconformity(scores, labels)
 
-        for delay in delays:
-            static_pool_scores, static_pool_timestamps = histories[delay].values_before(
-                timestamp
-            )
+        for delay, retention in policies:
+            policy = (delay, retention)
+            static_pool_scores, static_pool_timestamps = histories[
+                policy
+            ].values_before(timestamp)
             rows.append(
                 {
                     **_evaluate_threshold(
@@ -400,9 +464,10 @@ def _evaluate_condition(
                         pool_span_blocks=int(timestamp - static_pool_timestamps.min()),
                     ),
                     "extra_delay_blocks": int(delay),
+                    "feedback_retention": float(retention),
                 }
             )
-            pool_scores, pool_timestamps = histories[delay].values_before(
+            pool_scores, pool_timestamps = histories[policy].values_before(
                 timestamp,
                 max_count=rolling_window,
             )
@@ -424,9 +489,15 @@ def _evaluate_condition(
                         pool_span_blocks=int(timestamp - pool_timestamps.min()),
                     ),
                     "extra_delay_blocks": int(delay),
+                    "feedback_retention": float(retention),
                 }
             )
-            pending[delay].append((timestamp_index + delay + 1, timestamp, current_margins))
+            keep = feedback_rngs[policy].random(len(current_margins)) < retention
+            retained_margins = current_margins[keep]
+            if len(retained_margins):
+                pending[policy].append(
+                    (timestamp_index + delay + 1, timestamp, retained_margins)
+                )
 
     model.to("cpu")
     try:
@@ -446,6 +517,8 @@ def export_delay_feedback_sensitivity(
     data_root: Path | None = None,
     output_name: str = "final_confirmatory",
     delays: tuple[int, ...] = DEFAULT_DELAYS,
+    retentions: tuple[float, ...] = DEFAULT_RETENTIONS,
+    feedback_seed: int = DEFAULT_FEEDBACK_SEED,
     effect_deletion_rate: float | None = None,
     block_length: int = DEFAULT_BLOCK_LENGTH,
     iterations: int = DEFAULT_ITERATIONS,
@@ -460,6 +533,7 @@ def export_delay_feedback_sensitivity(
     run_root = run_root.resolve()
     paper_root = paper_root.resolve()
     delays = _validate_delays(delays)
+    retentions = _validate_retentions(retentions)
     config = load_config(run_root / "config.resolved.yaml")
     if data_root is not None:
         config = type(config)(
@@ -499,6 +573,8 @@ def export_delay_feedback_sensitivity(
                     rolling_window=config.rolling_window,
                     target_coverage=config.target_coverage,
                     delays=delays,
+                    retentions=retentions,
+                    feedback_seed=feedback_seed,
                     device=device,
                 )
             )
@@ -557,6 +633,8 @@ def export_delay_feedback_sensitivity(
             ),
         },
         "delays": list(delays),
+        "feedback_retentions": list(retentions),
+        "feedback_seed": int(feedback_seed),
         "device": str(device),
         "effect_deletion_rate": float(effect_deletion_rate),
         "iterations": int(iterations),
@@ -581,6 +659,13 @@ def _parse_int_tuple(value: str) -> tuple[int, ...]:
     return parsed
 
 
+def _parse_float_tuple(value: str) -> tuple[float, ...]:
+    parsed = tuple(float(part) for part in value.split(",") if part.strip())
+    if not parsed:
+        raise ValueError("at least one number is required")
+    return parsed
+
+
 def main() -> None:
     parser = ArgumentParser()
     parser.add_argument("--run-root", type=Path, required=True)
@@ -589,9 +674,15 @@ def main() -> None:
     parser.add_argument("--output-name", default="final_confirmatory")
     parser.add_argument(
         "--delays",
-        default="0,1,3,7",
+        default="0,1,3,7,14",
         help="Comma-separated additional feedback delays in test timestamp blocks.",
     )
+    parser.add_argument(
+        "--retentions",
+        default="1.0,0.9,0.7",
+        help="Comma-separated fractions of completed test feedback retained.",
+    )
+    parser.add_argument("--feedback-seed", type=int, default=DEFAULT_FEEDBACK_SEED)
     parser.add_argument("--effect-deletion-rate", type=float)
     parser.add_argument("--block-length", type=int, default=DEFAULT_BLOCK_LENGTH)
     parser.add_argument("--iterations", type=int, default=DEFAULT_ITERATIONS)
@@ -604,6 +695,8 @@ def main() -> None:
         data_root=args.data_root,
         output_name=args.output_name,
         delays=_parse_int_tuple(args.delays),
+        retentions=_parse_float_tuple(args.retentions),
+        feedback_seed=args.feedback_seed,
         effect_deletion_rate=args.effect_deletion_rate,
         block_length=args.block_length,
         iterations=args.iterations,

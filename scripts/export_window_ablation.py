@@ -40,6 +40,7 @@ from riskcal_tkg.metrics import coverage_and_size
 
 DEFAULT_COUNT_WINDOWS = (250, 500, 1000, 2000)
 DEFAULT_TIME_WINDOWS = (3, 7, 14, 30)
+DEFAULT_ACI_GAMMAS = (0.001, 0.005, 0.01, 0.05)
 METHOD_ORDER = [
     "static",
     "expanding",
@@ -55,6 +56,10 @@ METHOD_ORDER = [
     "time_window_7",
     "time_window_14",
     "time_window_30",
+    "aci_expanding_gamma_0p001",
+    "aci_expanding_gamma_0p005",
+    "aci_expanding_gamma_0p01",
+    "aci_expanding_gamma_0p05",
 ]
 
 
@@ -153,6 +158,31 @@ class ScoreHistory:
             timestamps = timestamps[-max_count:]
             scores = scores[-max_count:]
         return scores, timestamps
+
+
+@dataclass
+class AdaptiveAlphaState:
+    """Timestamp-batched ACI controller over strictly past scores."""
+
+    alpha: float
+    gamma: float
+    target_error: float
+
+    def __post_init__(self) -> None:
+        if not 0.0 < self.alpha < 1.0 or not 0.0 < self.target_error < 1.0:
+            raise ValueError("alpha and target_error must be in (0, 1)")
+        if self.gamma <= 0.0:
+            raise ValueError("gamma must be positive")
+
+    def update(self, observed_error: float) -> None:
+        if not 0.0 <= observed_error <= 1.0:
+            raise ValueError("observed_error must be in [0, 1]")
+        updated = self.alpha + self.gamma * (self.target_error - observed_error)
+        self.alpha = float(np.clip(updated, 1e-6, 1.0 - 1e-6))
+
+
+def _gamma_label(gamma: float) -> str:
+    return f"{gamma:g}".replace(".", "p")
 
 
 def effective_sample_size(timestamps: np.ndarray, timestamp: int, half_life: float) -> float:
@@ -402,7 +432,7 @@ def _load_condition_model(
     device: Any,
 ) -> Any:
     from riskcal_tkg.artifacts import load_verified_checkpoint
-    from riskcal_tkg.model import TemporalDistMult
+    from riskcal_tkg.model import build_temporal_model
 
     label = f"seed{seed}_delete{_rate_label(deletion_rate)}"
     marker = _read_json(run_root / "conditions" / f"{label}.complete.json")
@@ -413,12 +443,26 @@ def _load_condition_model(
         dataset_sha256=str(marker["dataset_sha256"]),
         deletion_mask_sha256=str(marker["deletion_mask_sha256"]),
     )
-    model = TemporalDistMult(
+    training_config = payload.get("training_config", {})
+    if not isinstance(training_config, dict):
+        training_config = {}
+    model_name = str(
+        payload.get("model_name", training_config.get("model_name", "temporal_distmult"))
+    )
+    time_encoding = str(
+        payload.get(
+            "time_encoding",
+            training_config.get("time_encoding", "polynomial_fourier"),
+        )
+    )
+    model = build_temporal_model(
+        model_name,
         len(table.entity_to_id),
         2 * relation_count,
         len(table.timestamp_to_id),
         embedding_dim,
         time_scale=int(float(payload["time_scale"])),
+        time_encoding=time_encoding,
     ).to(device)
     model.load_state_dict(payload["state_dict"], strict=True)  # type: ignore[arg-type]
     model.eval()
@@ -550,6 +594,7 @@ def _evaluate_condition(
     half_lives: tuple[float, ...],
     count_windows: tuple[int, ...],
     time_windows: tuple[int, ...],
+    aci_gammas: tuple[float, ...],
     device: torch.device,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     import torch
@@ -602,6 +647,14 @@ def _evaluate_condition(
     history = ScoreHistory()
     for batch, margins in zip(initial_batches, initial_margins, strict=True):
         history.add(batch.timestamp, margins)
+    aci_states = {
+        gamma: AdaptiveAlphaState(
+            alpha=1.0 - target_coverage,
+            gamma=gamma,
+            target_error=1.0 - target_coverage,
+        )
+        for gamma in aci_gammas
+    }
 
     method_rows: list[dict[str, Any]] = []
     pool_rows: list[dict[str, Any]] = []
@@ -723,6 +776,26 @@ def _evaluate_condition(
                 )
             )
 
+        for gamma, state in aci_states.items():
+            threshold = finite_sample_quantile(
+                expanding_scores,
+                alpha=state.alpha,
+            )
+            evaluated = _evaluate_threshold(
+                seed=seed,
+                deletion_rate=deletion_rate,
+                method=f"aci_expanding_gamma_{_gamma_label(gamma)}",
+                timestamp=timestamp_int,
+                scores=scores,
+                labels=labels,
+                threshold=threshold,
+                query_count=query_count,
+                pool_score_count=len(expanding_scores),
+                pool_span_blocks=int(timestamp_int - expanding_timestamps.min()),
+            )
+            method_rows.append({**evaluated, "aci_alpha": state.alpha})
+            state.update(1.0 - float(evaluated["coverage"]))
+
         history.add(timestamp_int, margin_nonconformity(scores, labels))
     model.to("cpu")
     if torch.cuda.is_available():
@@ -738,6 +811,7 @@ def export_window_ablation(
     output_name: str = "final_confirmatory",
     count_windows: tuple[int, ...] = DEFAULT_COUNT_WINDOWS,
     time_windows: tuple[int, ...] = DEFAULT_TIME_WINDOWS,
+    aci_gammas: tuple[float, ...] = DEFAULT_ACI_GAMMAS,
     device_name: str = "auto",
 ) -> dict[str, Any]:
     import torch
@@ -788,6 +862,7 @@ def export_window_ablation(
                 half_lives=config.half_lives,
                 count_windows=count_windows,
                 time_windows=time_windows,
+                aci_gammas=aci_gammas,
                 device=device,
             )
             method_rows.extend(current_methods)
@@ -845,6 +920,7 @@ def export_window_ablation(
         "target_coverage": config.target_coverage,
         "count_windows": list(count_windows),
         "time_windows": list(time_windows),
+        "aci_gammas": list(aci_gammas),
         "half_lives": [_finite_or_inf(value) for value in config.half_lives],
         "device": str(device),
         "condition_count": len(seeds) * len(config.deletion_rates),
@@ -867,6 +943,10 @@ def export_window_ablation(
             "time_window_D": (
                 "Unweighted conformal threshold over strictly earlier scores whose "
                 "internal timestamp IDs fall in the previous D timestamp blocks."
+            ),
+            "aci_expanding_gamma_G": (
+                "Timestamp-batched Adaptive Conformal Inference using all strictly "
+                "past scores and the prespecified step size G."
             ),
             "effective_sample_size": (
                 "Kish effective sample size computed from half-life weights on the "
@@ -893,6 +973,13 @@ def _parse_int_tuple(value: str) -> tuple[int, ...]:
     return parsed
 
 
+def _parse_float_tuple(value: str) -> tuple[float, ...]:
+    parsed = tuple(float(part) for part in value.split(",") if part.strip())
+    if not parsed or any(value <= 0.0 for value in parsed):
+        raise ValueError("at least one positive number is required")
+    return parsed
+
+
 def main() -> None:
     parser = ArgumentParser()
     parser.add_argument("--run-root", type=Path, required=True)
@@ -909,6 +996,11 @@ def main() -> None:
         default="3,7,14,30",
         help="Comma-separated timestamp-block lookback windows.",
     )
+    parser.add_argument(
+        "--aci-gammas",
+        default="0.001,0.005,0.01,0.05",
+        help="Comma-separated ACI step sizes.",
+    )
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     args = parser.parse_args()
     manifest = export_window_ablation(
@@ -918,6 +1010,7 @@ def main() -> None:
         output_name=args.output_name,
         count_windows=_parse_int_tuple(args.count_windows),
         time_windows=_parse_int_tuple(args.time_windows),
+        aci_gammas=_parse_float_tuple(args.aci_gammas),
         device_name=args.device,
     )
     print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))

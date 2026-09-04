@@ -3,10 +3,17 @@ import pandas as pd
 import pytest
 
 from scripts.export_delay_feedback_sensitivity import (
+    _validate_retentions,
     bootstrap_delay_effects,
     release_due_feedback,
     summarize_delay_rows,
 )
+
+
+def test_feedback_retentions_are_validated_and_ordered() -> None:
+    assert _validate_retentions((0.7, 1.0, 0.9, 0.7)) == (1.0, 0.9, 0.7)
+    with pytest.raises(ValueError, match="retentions"):
+        _validate_retentions((0.0,))
 from scripts.export_window_ablation import ScoreHistory
 
 

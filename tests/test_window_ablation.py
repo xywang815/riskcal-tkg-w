@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from scripts.export_window_ablation import (
+    AdaptiveAlphaState,
     ScoreHistory,
     aggregate_method_summary,
     build_interaction_effects,
@@ -12,6 +13,14 @@ from scripts.export_window_ablation import (
     summarize_method_rows,
     weighted_threshold_from_history,
 )
+
+
+def test_aci_controller_tightens_after_excess_miscoverage() -> None:
+    state = AdaptiveAlphaState(alpha=0.1, gamma=0.05, target_error=0.1)
+    state.update(observed_error=0.3)
+    assert state.alpha == pytest.approx(0.09)
+    state.update(observed_error=0.0)
+    assert state.alpha == pytest.approx(0.095)
 
 
 def test_score_history_keeps_most_recent_scores_by_count() -> None:
