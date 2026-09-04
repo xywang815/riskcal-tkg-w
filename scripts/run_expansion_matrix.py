@@ -79,16 +79,25 @@ def main() -> None:
         type=Path,
         default=Path("results/expansion_formal"),
     )
+    parser.add_argument(
+        "--git-commit",
+        help="Full source commit for deployments without a .git directory.",
+    )
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parents[1]
+    source_commit = args.git_commit or _git_commit(project_root)
+    if source_commit is not None and len(source_commit) != 40:
+        raise ValueError("git commit must be a full 40-character hash")
     progress_path = args.output_parent / "matrix_progress.json"
     if progress_path.is_file():
         progress = json.loads(progress_path.read_text(encoding="utf-8"))
+        if source_commit is not None and progress.get("git_commit") != source_commit:
+            raise ValueError("existing matrix was created from a different commit")
     else:
         progress = {
             "created_at": datetime.now(UTC).isoformat(),
-            "git_commit": _git_commit(project_root),
+            "git_commit": source_commit,
             "runs": {},
         }
     runs = progress.setdefault("runs", {})
