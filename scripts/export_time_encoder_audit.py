@@ -145,7 +145,7 @@ def build_timestamp_contrasts(rows: pd.DataFrame) -> pd.DataFrame:
     wide = methods.pivot(
         index=identity,
         columns="method",
-        values=("coverage", "mean_size", "threshold"),
+        values=["coverage", "mean_size", "threshold"],
     )
     wide.columns = [f"{method}_{metric}" for metric, method in wide.columns]
     wide = wide.reset_index()
