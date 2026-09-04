@@ -11,6 +11,36 @@ import torch.nn.functional as F
 from .metrics import filtered_rank
 
 
+TIME_ENCODINGS = (
+    "none",
+    "linear",
+    "bounded_fourier",
+    "polynomial_fourier",
+)
+
+
+def _time_features(values: torch.Tensor, encoding: str) -> torch.Tensor:
+    if encoding not in TIME_ENCODINGS:
+        raise ValueError(f"unknown time_encoding: {encoding}")
+    zeros = torch.zeros_like(values)
+    linear = values if encoding in {"linear", "polynomial_fourier"} else zeros
+    quadratic = values.square() if encoding == "polynomial_fourier" else zeros
+    sine = (
+        torch.sin(math.pi * values)
+        if encoding in {"bounded_fourier", "polynomial_fourier"}
+        else zeros
+    )
+    cosine = (
+        torch.cos(math.pi * values)
+        if encoding in {"bounded_fourier", "polynomial_fourier"}
+        else zeros
+    )
+    return torch.stack(
+        (torch.ones_like(values), linear, quadratic, sine, cosine),
+        dim=-1,
+    )
+
+
 class ContinuousTimeEncoder(nn.Module):
     """Learn a smooth multiplicative time modulation shared across timestamps."""
 
@@ -19,9 +49,14 @@ class ContinuousTimeEncoder(nn.Module):
         num_timestamps: int,
         embedding_dim: int,
         time_scale: int | None = None,
+        time_encoding: str = "polynomial_fourier",
     ) -> None:
         super().__init__()
+        if time_encoding not in TIME_ENCODINGS:
+            raise ValueError(f"unknown time_encoding: {time_encoding}")
         self.num_embeddings = num_timestamps
+        self.embedding_dim = embedding_dim
+        self.time_encoding = time_encoding
         scale = max(num_timestamps - 1, 1) if time_scale is None else max(time_scale, 1)
         self.register_buffer("scale", torch.tensor(float(scale)))
         self.projection = nn.Linear(5, embedding_dim, bias=False)
@@ -29,17 +64,14 @@ class ContinuousTimeEncoder(nn.Module):
         nn.init.uniform_(self.projection.weight, -bound, bound)
 
     def forward(self, timestamp_ids: torch.Tensor) -> torch.Tensor:
+        if self.time_encoding == "none":
+            return torch.ones(
+                (*timestamp_ids.shape, self.embedding_dim),
+                dtype=self.projection.weight.dtype,
+                device=timestamp_ids.device,
+            )
         values = timestamp_ids.to(dtype=self.projection.weight.dtype) / self.scale
-        features = torch.stack(
-            (
-                torch.ones_like(values),
-                values,
-                values.square(),
-                torch.sin(math.pi * values),
-                torch.cos(math.pi * values),
-            ),
-            dim=-1,
-        )
+        features = _time_features(values, self.time_encoding)
         return 1.0 + self.projection(features)
 
 
@@ -51,9 +83,14 @@ class ContinuousComplexTimeEncoder(nn.Module):
         num_timestamps: int,
         embedding_dim: int,
         time_scale: int | None = None,
+        time_encoding: str = "polynomial_fourier",
     ) -> None:
         super().__init__()
+        if time_encoding not in TIME_ENCODINGS:
+            raise ValueError(f"unknown time_encoding: {time_encoding}")
         self.num_embeddings = num_timestamps
+        self.embedding_dim = embedding_dim
+        self.time_encoding = time_encoding
         scale = max(num_timestamps - 1, 1) if time_scale is None else max(time_scale, 1)
         self.register_buffer("scale", torch.tensor(float(scale)))
         self.projection = nn.Linear(5, 2 * embedding_dim, bias=False)
@@ -61,17 +98,15 @@ class ContinuousComplexTimeEncoder(nn.Module):
         nn.init.uniform_(self.projection.weight, -bound, bound)
 
     def forward(self, timestamp_ids: torch.Tensor) -> torch.Tensor:
+        if self.time_encoding == "none":
+            real = torch.ones(
+                (*timestamp_ids.shape, self.embedding_dim),
+                dtype=self.projection.weight.dtype,
+                device=timestamp_ids.device,
+            )
+            return torch.cat((real, torch.zeros_like(real)), dim=-1)
         values = timestamp_ids.to(dtype=self.projection.weight.dtype) / self.scale
-        features = torch.stack(
-            (
-                torch.ones_like(values),
-                values,
-                values.square(),
-                torch.sin(math.pi * values),
-                torch.cos(math.pi * values),
-            ),
-            dim=-1,
-        )
+        features = _time_features(values, self.time_encoding)
         modulation = self.projection(features)
         real, imaginary = modulation.chunk(2, dim=-1)
         return torch.cat((1.0 + real, imaginary), dim=-1)
@@ -85,13 +120,19 @@ class TemporalDistMult(nn.Module):
         num_timestamps: int,
         embedding_dim: int,
         time_scale: int | None = None,
+        time_encoding: str = "polynomial_fourier",
     ) -> None:
         super().__init__()
         if min(num_entities, num_relations, num_timestamps, embedding_dim) <= 0:
             raise ValueError("embedding table sizes and dimension must be positive")
         self.entity = nn.Embedding(num_entities, embedding_dim)
         self.relation = nn.Embedding(num_relations, embedding_dim)
-        self.time = ContinuousTimeEncoder(num_timestamps, embedding_dim, time_scale)
+        self.time = ContinuousTimeEncoder(
+            num_timestamps,
+            embedding_dim,
+            time_scale,
+            time_encoding,
+        )
         bound = 1.0 / math.sqrt(embedding_dim)
         for embedding in (self.entity, self.relation):
             nn.init.uniform_(embedding.weight, -bound, bound)
@@ -154,6 +195,7 @@ class ContinuousTemporalComplEx(nn.Module):
         num_timestamps: int,
         embedding_dim: int,
         time_scale: int | None = None,
+        time_encoding: str = "polynomial_fourier",
     ) -> None:
         super().__init__()
         if min(num_entities, num_relations, num_timestamps, embedding_dim) <= 0:
@@ -165,6 +207,7 @@ class ContinuousTemporalComplEx(nn.Module):
             num_timestamps,
             embedding_dim,
             time_scale,
+            time_encoding,
         )
         bound = 1.0 / math.sqrt(embedding_dim)
         for embedding in (self.entity, self.relation):
@@ -267,6 +310,7 @@ def build_temporal_model(
     num_timestamps: int,
     embedding_dim: int,
     time_scale: int | None = None,
+    time_encoding: str = "polynomial_fourier",
 ) -> TemporalModel:
     models = {
         "temporal_distmult": TemporalDistMult,
@@ -282,12 +326,14 @@ def build_temporal_model(
         num_timestamps,
         embedding_dim,
         time_scale,
+        time_encoding,
     )
 
 
 @dataclass(frozen=True)
 class TrainingConfig:
     model_name: str = "temporal_distmult"
+    time_encoding: str = "polynomial_fourier"
     negative_sampling: str = "uniform"
     embedding_dim: int = 128
     epochs: int = 100
@@ -303,6 +349,8 @@ class TrainingConfig:
     def __post_init__(self) -> None:
         if self.model_name not in {"temporal_distmult", "continuous_tcomplex"}:
             raise ValueError("unknown model_name")
+        if self.time_encoding not in TIME_ENCODINGS:
+            raise ValueError("unknown time_encoding")
         if self.negative_sampling not in {"uniform", "filtered"}:
             raise ValueError("negative_sampling must be uniform or filtered")
         if min(
@@ -465,6 +513,7 @@ def train_model(
         num_timestamps,
         config.embedding_dim,
         time_scale=int(facts[:, 3].max()),
+        time_encoding=config.time_encoding,
     ).to(target_device)
     optimizer = torch.optim.Adam(
         model.parameters(),

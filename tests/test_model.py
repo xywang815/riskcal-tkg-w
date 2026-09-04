@@ -3,6 +3,8 @@ import torch
 import numpy as np
 
 from riskcal_tkg.model import (
+    ContinuousComplexTimeEncoder,
+    ContinuousTimeEncoder,
     ContinuousTemporalComplEx,
     TemporalDistMult,
     TrainingConfig,
@@ -10,6 +12,43 @@ from riskcal_tkg.model import (
     _sample_negative_objects,
     train_model,
 )
+
+
+@pytest.mark.parametrize(
+    "encoder_class,output_multiplier",
+    ((ContinuousTimeEncoder, 1), (ContinuousComplexTimeEncoder, 2)),
+)
+@pytest.mark.parametrize(
+    "time_encoding",
+    ("none", "linear", "bounded_fourier", "polynomial_fourier"),
+)
+def test_time_encoding_variants_are_finite_and_shape_stable(
+    encoder_class: type[ContinuousTimeEncoder] | type[ContinuousComplexTimeEncoder],
+    output_multiplier: int,
+    time_encoding: str,
+) -> None:
+    encoder = encoder_class(
+        num_timestamps=4,
+        embedding_dim=3,
+        time_scale=2,
+        time_encoding=time_encoding,
+    )
+    encoded = encoder(torch.tensor([0, 2, 100]))
+    assert encoded.shape == (3, output_multiplier * 3)
+    assert torch.isfinite(encoded).all()
+
+
+@pytest.mark.parametrize(
+    "encoder_class",
+    (ContinuousTimeEncoder, ContinuousComplexTimeEncoder),
+)
+def test_no_time_encoding_is_timestamp_invariant(
+    encoder_class: type[ContinuousTimeEncoder] | type[ContinuousComplexTimeEncoder],
+) -> None:
+    encoder = encoder_class(4, 3, time_scale=2, time_encoding="none")
+    encoded = encoder(torch.tensor([0, 2, 100]))
+    assert torch.equal(encoded[0], encoded[1])
+    assert torch.equal(encoded[1], encoded[2])
 
 
 def test_temporal_distmult_matches_hand_calculation() -> None:

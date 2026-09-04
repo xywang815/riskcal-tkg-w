@@ -15,6 +15,7 @@ class ExperimentConfig:
     data_path: Path = Path("data/raw/icews14")
     output_root: Path = Path("results")
     model_name: str = "temporal_distmult"
+    time_encoding: str = "polynomial_fourier"
     negative_sampling: str = "uniform"
     include_kgcp_baselines: bool = False
     explicit_method_names: bool = False
@@ -53,6 +54,13 @@ class ExperimentConfig:
             raise ValueError("data_mode must be toy, icews14, or icews05_15")
         if self.model_name not in {"temporal_distmult", "continuous_tcomplex"}:
             raise ValueError("unknown model_name")
+        if self.time_encoding not in {
+            "none",
+            "linear",
+            "bounded_fourier",
+            "polynomial_fourier",
+        }:
+            raise ValueError("unknown time_encoding")
         if self.negative_sampling not in {"uniform", "filtered"}:
             raise ValueError("negative_sampling must be uniform or filtered")
         if not 0.0 < self.target_coverage < 1.0:

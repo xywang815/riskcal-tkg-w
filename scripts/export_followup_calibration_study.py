@@ -37,7 +37,17 @@ HISTORY_NAMES = ("static", "expanding", "rolling")
 
 
 def _sha256_json(value: object) -> str:
-    payload = json.dumps(value, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    hash_value = dict(value) if isinstance(value, dict) else value
+    if (
+        isinstance(hash_value, dict)
+        and hash_value.get("time_encoding") == "polynomial_fourier"
+    ):
+        hash_value.pop("time_encoding")
+    payload = json.dumps(
+        hash_value,
+        ensure_ascii=False,
+        sort_keys=True,
+    ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -201,6 +211,7 @@ def _evaluate_case_seed(
         len(table.timestamp_to_id),
         config.embedding_dim,
         time_scale=int(float(checkpoint["time_scale"])),
+        time_encoding=config.time_encoding,
     )
     model.load_state_dict(checkpoint["state_dict"], strict=True)
     model = model.to(device)
@@ -307,6 +318,7 @@ def _evaluate_case_seed(
                         "case": case["name"],
                         "dataset_mode": config.data_mode,
                         "model_name": config.model_name,
+                        "time_encoding": config.time_encoding,
                         "negative_sampling": config.negative_sampling,
                         "seed": seed,
                         "deletion_rate": deletion_rate,
@@ -342,6 +354,7 @@ def _evaluate_case_seed(
                     "case": case["name"],
                     "dataset_mode": config.data_mode,
                     "model_name": config.model_name,
+                    "time_encoding": config.time_encoding,
                     "negative_sampling": config.negative_sampling,
                     "seed": seed,
                     "deletion_rate": deletion_rate,
@@ -388,6 +401,7 @@ def aggregate_by_seed(rows: pd.DataFrame) -> pd.DataFrame:
         "case",
         "dataset_mode",
         "model_name",
+        "time_encoding",
         "negative_sampling",
         "seed",
         "deletion_rate",
@@ -464,7 +478,14 @@ def build_query_objective_contrasts(by_seed: pd.DataFrame) -> pd.DataFrame:
         & (by_seed["history"].isin(HISTORY_NAMES))
         & (by_seed["objective"].isin(("label", "query_max")))
     ]
-    index = ["case", "dataset_mode", "model_name", "seed", "history"]
+    index = [
+        "case",
+        "dataset_mode",
+        "model_name",
+        "time_encoding",
+        "seed",
+        "history",
+    ]
     wide = selected.pivot(index=index, columns="objective")
     records = wide.index.to_frame(index=False)
     for metric in (

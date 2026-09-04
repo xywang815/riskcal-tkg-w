@@ -79,6 +79,13 @@ def _jsonable(value: Any) -> Any:
     return value
 
 
+def _config_hash_payload(resolved: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(resolved)
+    if payload.get("time_encoding") == "polynomial_fourier":
+        payload.pop("time_encoding")
+    return payload
+
+
 def _score_all_objects(
     model: TemporalModel,
     values: np.ndarray,
@@ -287,6 +294,7 @@ def _evaluate_condition(
         atomic_write_json(deletion_path, deletion_record)
     training_config = TrainingConfig(
         model_name=config.model_name,
+        time_encoding=config.time_encoding,
         negative_sampling=config.negative_sampling,
         embedding_dim=config.embedding_dim,
         epochs=config.epochs,
@@ -315,6 +323,7 @@ def _evaluate_condition(
             len(table.timestamp_to_id),
             config.embedding_dim,
             time_scale=int(float(checkpoint_payload["time_scale"])),
+            time_encoding=config.time_encoding,
         )
         model.load_state_dict(checkpoint_payload["state_dict"], strict=True)  # type: ignore[arg-type]
         trained = TrainingResult(
@@ -455,6 +464,7 @@ def _evaluate_condition(
                 "state_dict": trained.model.state_dict(),
                 "training_config": asdict(training_config),
                 "model_name": config.model_name,
+                "time_encoding": config.time_encoding,
                 "negative_sampling": config.negative_sampling,
                 "time_scale": float(trained.model.time.scale.item()),
                 "loss_history": trained.loss_history,
@@ -586,6 +596,13 @@ def _evaluate_condition(
         frequency_ranking = ranking_metrics(frequency_ranks)
         top1 = scores.argmax(axis=1)
         top1_correct = top1 == labels
+        row_indices = np.arange(len(scores))
+        true_scores = scores[row_indices, labels]
+        score_minima = scores.min(axis=1)
+        score_maxima = scores.max(axis=1)
+        score_ranges = score_maxima - score_minima
+        score_standard_deviations = scores.std(axis=1)
+        true_margins = score_maxima - true_scores
         answer_counts = np.asarray(
             [
                 len(truth[(int(subject), int(relation), int(timestamp))])
@@ -616,6 +633,7 @@ def _evaluate_condition(
                 "actual_deletion_rate": deletion.actual_rate,
                 "dataset_mode": config.data_mode,
                 "model_name": config.model_name,
+                "time_encoding": config.time_encoding,
                 "negative_sampling": config.negative_sampling,
                 "method": method,
                 "method_definition": method_definitions[method],
@@ -642,6 +660,18 @@ def _evaluate_condition(
                 ),
                 "calibration_protocol": calibration_protocol,
                 "query_count": len(facts),
+                "score_global_min": float(scores.min()),
+                "score_global_max": float(scores.max()),
+                "score_global_range": float(scores.max() - scores.min()),
+                "score_mean": float(scores.mean()),
+                "score_std": float(scores.std()),
+                "mean_query_score_range": float(score_ranges.mean()),
+                "median_query_score_range": float(np.median(score_ranges)),
+                "mean_query_score_std": float(score_standard_deviations.mean()),
+                "true_score_mean": float(true_scores.mean()),
+                "true_score_std": float(true_scores.std()),
+                "true_margin_mean": float(true_margins.mean()),
+                "true_margin_std": float(true_margins.std()),
                 "coverage": calibrated.coverage,
                 "mean_size": calibrated.mean_size,
                 "median_size": calibrated.median_size,
@@ -674,6 +704,7 @@ def _evaluate_condition(
                         "deletion_rate": deletion_rate,
                         "dataset_mode": config.data_mode,
                         "model_name": config.model_name,
+                        "time_encoding": config.time_encoding,
                         "negative_sampling": config.negative_sampling,
                         "method": method,
                         "method_definition": method_definitions[method],
@@ -689,6 +720,12 @@ def _evaluate_condition(
                         "set_size": int(sizes[index]),
                         "covered": bool(mask[index, labels[index]]),
                         "top1_correct": bool(top1_correct[index]),
+                        "true_score": float(true_scores[index]),
+                        "query_score_min": float(score_minima[index]),
+                        "query_score_max": float(score_maxima[index]),
+                        "query_score_range": float(score_ranges[index]),
+                        "query_score_std": float(score_standard_deviations[index]),
+                        "true_margin": float(true_margins[index]),
                     }
                 )
         current_margins = margin_nonconformity(scores, labels)
@@ -704,6 +741,7 @@ def _evaluate_condition(
             "deletion_rate": deletion_rate,
             "dataset_mode": config.data_mode,
             "model_name": config.model_name,
+            "time_encoding": config.time_encoding,
             "negative_sampling": config.negative_sampling,
             "kgcp_temperature": config.kgcp_temperature,
             "calibration_protocol": calibration_protocol,
@@ -850,7 +888,10 @@ def run_table_experiment(
 ) -> Path:
     started = time.perf_counter()
     resolved = _jsonable(asdict(config))
-    config_bytes = json.dumps(resolved, sort_keys=True).encode("utf-8")
+    config_bytes = json.dumps(
+        _config_hash_payload(resolved),
+        sort_keys=True,
+    ).encode("utf-8")
     config_sha256 = hashlib.sha256(config_bytes).hexdigest()
     config_hash = config_sha256[:12]
     split = temporal_split(
@@ -883,6 +924,7 @@ def run_table_experiment(
         existing_config = json.loads(
             (run.root / "config.resolved.yaml").read_text(encoding="utf-8")
         )
+        existing_config.setdefault("time_encoding", "polynomial_fourier")
         if existing_config != resolved:
             raise ValueError("resume config does not match the original run")
         existing_dataset = json.loads(
