@@ -1,0 +1,55 @@
+target_coverage: 0.90
+deletion_rate: 0.0
+temperature: 1.0
+rolling_window: 1000
+candidate_budgets: [50, 100, 250, 500, 1000]
+seeds: [17, 29, 43, 59, 71]
+cases:
+  - name: icews14_distmult_none
+    config: configs/time_encoder_audit/icews14_distmult_none.yaml
+    run_key: icews14_distmult_none
+  - name: icews14_distmult_linear
+    config: configs/time_encoder_audit/icews14_distmult_linear.yaml
+    run_key: icews14_distmult_linear
+  - name: icews14_distmult_bounded_fourier
+    config: configs/time_encoder_audit/icews14_distmult_bounded_fourier.yaml
+    run_key: icews14_distmult_bounded_fourier
+  - name: icews14_distmult_polynomial_fourier
+    config: configs/time_encoder_audit/icews14_distmult_polynomial_fourier.yaml
+    run_key: icews14_distmult_polynomial_fourier
+  - name: icews14_tcomplex_none
+    config: configs/time_encoder_audit/icews14_tcomplex_none.yaml
+    run_key: icews14_tcomplex_none
+  - name: icews14_tcomplex_linear
+    config: configs/time_encoder_audit/icews14_tcomplex_linear.yaml
+    run_key: icews14_tcomplex_linear
+  - name: icews14_tcomplex_bounded_fourier
+    config: configs/time_encoder_audit/icews14_tcomplex_bounded_fourier.yaml
+    run_key: icews14_tcomplex_bounded_fourier
+  - name: icews14_tcomplex_polynomial_fourier
+    config: configs/time_encoder_audit/icews14_tcomplex_polynomial_fourier.yaml
+    run_key: icews14_tcomplex_polynomial_fourier
+  - name: icews05_15_distmult_none
+    config: configs/time_encoder_audit/icews05_15_distmult_none.yaml
+    run_key: icews05_15_distmult_none
+  - name: icews05_15_distmult_linear
+    config: configs/time_encoder_audit/icews05_15_distmult_linear.yaml
+    run_key: icews05_15_distmult_linear
+  - name: icews05_15_distmult_bounded_fourier
+    config: configs/time_encoder_audit/icews05_15_distmult_bounded_fourier.yaml
+    run_key: icews05_15_distmult_bounded_fourier
+  - name: icews05_15_distmult_polynomial_fourier
+    config: configs/time_encoder_audit/icews05_15_distmult_polynomial_fourier.yaml
+    run_key: icews05_15_distmult_polynomial_fourier
+  - name: icews05_15_tcomplex_none
+    config: configs/time_encoder_audit/icews05_15_tcomplex_none.yaml
+    run_key: icews05_15_tcomplex_none
+  - name: icews05_15_tcomplex_linear
+    config: configs/time_encoder_audit/icews05_15_tcomplex_linear.yaml
+    run_key: icews05_15_tcomplex_linear
+  - name: icews05_15_tcomplex_bounded_fourier
+    config: configs/time_encoder_audit/icews05_15_tcomplex_bounded_fourier.yaml
+    run_key: icews05_15_tcomplex_bounded_fourier
+  - name: icews05_15_tcomplex_polynomial_fourier
+    config: configs/time_encoder_audit/icews05_15_tcomplex_polynomial_fourier.yaml
+    run_key: icews05_15_tcomplex_polynomial_fourier
